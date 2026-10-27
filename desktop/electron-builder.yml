@@ -1,0 +1,25 @@
+appId: dev.adboptimizer.desktop
+productName: ADB Optimizer
+directories:
+  output: release
+  buildResources: build
+files:
+  - dist/**/*
+  - package.json
+extraResources:
+  - from: ../shared
+    to: shared
+    filter:
+      - '**/*'
+mac:
+  category: public.app-category.utilities
+  target:
+    - dmg
+  hardenedRuntime: true
+win:
+  target:
+    - nsis
+linux:
+  target:
+    - AppImage
+  category: Utility

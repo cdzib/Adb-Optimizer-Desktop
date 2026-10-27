@@ -1,0 +1,14 @@
+{
+  "id": "cpuinfo-aosp-simple",
+  "synthetic": true,
+  "capturedOn": null,
+  "sdk": null,
+  "command": "dumpsys cpuinfo",
+  "stdout": "Load: 1.42 / 1.10 / 0.98\nCPU usage from 0ms to 5000ms later (2026-10-20 10:00:00):\n  18% 2210/com.example.video: 12% user + 6% kernel / faults: 120 minor\n  9% 900/system: 5% user + 4% kernel\n  3% 1180/com.example.launcher: 2% user + 1% kernel\n1.2% TOTAL: 0.8% user + 0.4% kernel\n",
+  "expected": {
+    "load1": 1.42,
+    "load5": 1.1,
+    "load15": 0.98,
+    "busyPercent": 1.2
+  }
+}

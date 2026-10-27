@@ -1,0 +1,14 @@
+{
+  "id": "meminfo-aosp-2gb",
+  "synthetic": true,
+  "capturedOn": null,
+  "sdk": null,
+  "command": "dumpsys meminfo",
+  "stdout": "Applications Memory Usage (in Kilobytes):\nUptime: 987654 Realtime: 987654\n\nTotal PSS by process:\n    320,000K: com.example.video (pid 2210)\n    120,000K: com.example.launcher (pid 1180)\n     80,000K: system (pid 900)\n\nTotal RAM: 2,097,152K (status normal)\n Free RAM:   897,152K (  400,000K cached pss + 300,000K cached kernel + 197,152K free)\n",
+  "expected": {
+    "totalKb": 2097152,
+    "freeKb": 897152,
+    "usedKb": 1200000,
+    "cachedKb": 400000
+  }
+}

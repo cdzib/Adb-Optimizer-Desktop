@@ -1,0 +1,616 @@
+{
+  "schemaVersion": 1,
+  "catalogVersion": "0.2.0",
+  "note": "Solo recetas de comandos verificados sobre 'adb shell' (uid 2000), sin root. Cualquier receta nueva debe traer evidencia en docs/evidence/.",
+  "recipes": [
+    {
+      "id": "animations-off",
+      "category": "performance",
+      "risk": "safe",
+      "requiresRoot": false,
+      "impact": "high",
+      "appliesTo": {
+        "minSdk": 21
+      },
+      "titleKey": "recipe.animations_off.title",
+      "summaryKey": "recipe.animations_off.summary",
+      "steps": [
+        {
+          "run": "settings put global window_animation_scale 0",
+          "verify": {
+            "run": "settings get global window_animation_scale",
+            "equals": "0"
+          },
+          "undo": "settings put global window_animation_scale {{prev}}",
+          "undoIfUnset": "settings delete global window_animation_scale",
+          "timeoutMs": 5000
+        },
+        {
+          "run": "settings put global transition_animation_scale 0",
+          "verify": {
+            "run": "settings get global transition_animation_scale",
+            "equals": "0"
+          },
+          "undo": "settings put global transition_animation_scale {{prev}}",
+          "undoIfUnset": "settings delete global transition_animation_scale",
+          "timeoutMs": 5000
+        },
+        {
+          "run": "settings put global animator_duration_scale 0",
+          "verify": {
+            "run": "settings get global animator_duration_scale",
+            "equals": "0"
+          },
+          "undo": "settings put global animator_duration_scale {{prev}}",
+          "undoIfUnset": "settings delete global animator_duration_scale",
+          "timeoutMs": 5000
+        }
+      ]
+    },
+    {
+      "id": "animations-halved",
+      "category": "performance",
+      "risk": "safe",
+      "requiresRoot": false,
+      "impact": "medium",
+      "appliesTo": {
+        "minSdk": 21
+      },
+      "titleKey": "recipe.animations_halved.title",
+      "summaryKey": "recipe.animations_halved.summary",
+      "steps": [
+        {
+          "run": "settings put global window_animation_scale 0.5",
+          "verify": {
+            "run": "settings get global window_animation_scale",
+            "equals": "0.5"
+          },
+          "undo": "settings put global window_animation_scale {{prev}}",
+          "undoIfUnset": "settings delete global window_animation_scale",
+          "timeoutMs": 5000
+        },
+        {
+          "run": "settings put global transition_animation_scale 0.5",
+          "verify": {
+            "run": "settings get global transition_animation_scale",
+            "equals": "0.5"
+          },
+          "undo": "settings put global transition_animation_scale {{prev}}",
+          "undoIfUnset": "settings delete global transition_animation_scale",
+          "timeoutMs": 5000
+        },
+        {
+          "run": "settings put global animator_duration_scale 0.5",
+          "verify": {
+            "run": "settings get global animator_duration_scale",
+            "equals": "0.5"
+          },
+          "undo": "settings put global animator_duration_scale {{prev}}",
+          "undoIfUnset": "settings delete global animator_duration_scale",
+          "timeoutMs": 5000
+        }
+      ]
+    },
+    {
+      "id": "disable-window-blur",
+      "category": "performance",
+      "risk": "safe",
+      "requiresRoot": false,
+      "impact": "medium",
+      "appliesTo": {
+        "minSdk": 31
+      },
+      "titleKey": "recipe.disable_window_blur.title",
+      "summaryKey": "recipe.disable_window_blur.summary",
+      "steps": [
+        {
+          "run": "settings put global disable_window_blur true",
+          "verify": {
+            "run": "settings get global disable_window_blur",
+            "equals": "true"
+          },
+          "undo": "settings put global disable_window_blur {{prev}}",
+          "undoIfUnset": "settings delete global disable_window_blur",
+          "timeoutMs": 5000
+        }
+      ]
+    },
+    {
+      "id": "clear-background-activities",
+      "category": "performance",
+      "risk": "safe",
+      "requiresRoot": false,
+      "impact": "medium",
+      "appliesTo": {
+        "minSdk": 21
+      },
+      "titleKey": "recipe.clear_background_activities.title",
+      "summaryKey": "recipe.clear_background_activities.summary",
+      "steps": [
+        {
+          "run": "am kill-all",
+          "verify": {
+            "run": "echo ok",
+            "equals": "ok"
+          },
+          "undo": null,
+          "timeoutMs": 8000
+        }
+      ]
+    },
+    {
+      "id": "force-doze",
+      "category": "battery",
+      "risk": "moderate",
+      "requiresRoot": false,
+      "impact": "medium",
+      "appliesTo": {
+        "minSdk": 23
+      },
+      "titleKey": "recipe.force_doze.title",
+      "summaryKey": "recipe.force_doze.summary",
+      "steps": [
+        {
+          "run": "cmd deviceidle force-idle",
+          "verify": {
+            "run": "dumpsys deviceidle | grep -m1 'mState='",
+            "contains": "IDLE"
+          },
+          "undo": "cmd deviceidle unforce",
+          "timeoutMs": 15000
+        }
+      ]
+    },
+    {
+      "id": "trim-caches",
+      "category": "storage",
+      "risk": "safe",
+      "requiresRoot": false,
+      "impact": "medium",
+      "appliesTo": {
+        "minSdk": 21
+      },
+      "titleKey": "recipe.trim_caches.title",
+      "summaryKey": "recipe.trim_caches.summary",
+      "steps": [
+        {
+          "run": "pm trim-caches 2048M",
+          "verify": {
+            "run": "echo ok",
+            "equals": "ok"
+          },
+          "undo": null,
+          "timeoutMs": 30000
+        }
+      ]
+    },
+    {
+      "id": "clear-logcat",
+      "category": "storage",
+      "risk": "safe",
+      "requiresRoot": false,
+      "impact": "low",
+      "appliesTo": {
+        "minSdk": 21
+      },
+      "titleKey": "recipe.clear_logcat.title",
+      "summaryKey": "recipe.clear_logcat.summary",
+      "steps": [
+        {
+          "run": "logcat -b all -c",
+          "verify": {
+            "run": "echo ok",
+            "equals": "ok"
+          },
+          "undo": null,
+          "timeoutMs": 10000
+        }
+      ]
+    },
+    {
+      "id": "reduce-logcat-buffer",
+      "category": "storage",
+      "risk": "safe",
+      "requiresRoot": false,
+      "impact": "low",
+      "appliesTo": {
+        "minSdk": 21
+      },
+      "titleKey": "recipe.reduce_logcat_buffer.title",
+      "summaryKey": "recipe.reduce_logcat_buffer.summary",
+      "steps": [
+        {
+          "run": "logcat -G 256K",
+          "verify": {
+            "run": "logcat -g | head -1",
+            "contains": "256K"
+          },
+          "undo": "logcat -G 1M",
+          "timeoutMs": 10000
+        }
+      ]
+    },
+    {
+      "id": "location-off",
+      "category": "privacy",
+      "risk": "moderate",
+      "requiresRoot": false,
+      "impact": "low",
+      "appliesTo": {
+        "minSdk": 21
+      },
+      "titleKey": "recipe.location_off.title",
+      "summaryKey": "recipe.location_off.summary",
+      "steps": [
+        {
+          "run": "settings put secure location_mode 0",
+          "verify": {
+            "run": "settings get secure location_mode",
+            "equals": "0"
+          },
+          "undo": "settings put secure location_mode {{prev}}",
+          "undoIfUnset": "settings delete secure location_mode",
+          "timeoutMs": 5000
+        }
+      ]
+    },
+    {
+      "id": "assist-gesture-off",
+      "category": "performance",
+      "risk": "safe",
+      "requiresRoot": false,
+      "impact": "low",
+      "appliesTo": {
+        "minSdk": 26
+      },
+      "titleKey": "recipe.assist_gesture_off.title",
+      "summaryKey": "recipe.assist_gesture_off.summary",
+      "steps": [
+        {
+          "run": "settings put secure assist_gesture_enabled 0",
+          "verify": {
+            "run": "settings get secure assist_gesture_enabled",
+            "equals": "0"
+          },
+          "undo": "settings put secure assist_gesture_enabled {{prev}}",
+          "undoIfUnset": "settings delete secure assist_gesture_enabled",
+          "timeoutMs": 5000
+        }
+      ]
+    },
+    {
+      "id": "haptic-feedback-off",
+      "category": "performance",
+      "risk": "safe",
+      "requiresRoot": false,
+      "impact": "low",
+      "appliesTo": {
+        "minSdk": 21
+      },
+      "titleKey": "recipe.haptic_feedback_off.title",
+      "summaryKey": "recipe.haptic_feedback_off.summary",
+      "steps": [
+        {
+          "run": "settings put system haptic_feedback_enabled 0",
+          "verify": {
+            "run": "settings get system haptic_feedback_enabled",
+            "equals": "0"
+          },
+          "undo": "settings put system haptic_feedback_enabled {{prev}}",
+          "undoIfUnset": "settings delete system haptic_feedback_enabled",
+          "timeoutMs": 5000
+        }
+      ]
+    },
+    {
+      "id": "touch-sounds-off",
+      "category": "performance",
+      "risk": "safe",
+      "requiresRoot": false,
+      "impact": "low",
+      "appliesTo": {
+        "minSdk": 21
+      },
+      "titleKey": "recipe.touch_sounds_off.title",
+      "summaryKey": "recipe.touch_sounds_off.summary",
+      "steps": [
+        {
+          "run": "settings put system sound_effects_enabled 0",
+          "verify": {
+            "run": "settings get system sound_effects_enabled",
+            "equals": "0"
+          },
+          "undo": "settings put system sound_effects_enabled {{prev}}",
+          "undoIfUnset": "settings delete system sound_effects_enabled",
+          "timeoutMs": 5000
+        }
+      ]
+    },
+    {
+      "id": "screensaver-off",
+      "category": "tv",
+      "risk": "safe",
+      "requiresRoot": false,
+      "impact": "low",
+      "appliesTo": {
+        "minSdk": 21,
+        "isTv": true
+      },
+      "titleKey": "recipe.screensaver_off.title",
+      "summaryKey": "recipe.screensaver_off.summary",
+      "steps": [
+        {
+          "run": "settings put secure screensaver_enabled 0",
+          "verify": {
+            "run": "settings get secure screensaver_enabled",
+            "equals": "0"
+          },
+          "undo": "settings put secure screensaver_enabled {{prev}}",
+          "undoIfUnset": "settings delete secure screensaver_enabled",
+          "timeoutMs": 5000
+        }
+      ]
+    },
+    {
+      "id": "tv-fixed-performance",
+      "category": "tv",
+      "risk": "advanced",
+      "requiresRoot": false,
+      "impact": "high",
+      "appliesTo": {
+        "minSdk": 28,
+        "isTv": true
+      },
+      "titleKey": "recipe.tv_fixed_performance.title",
+      "summaryKey": "recipe.tv_fixed_performance.summary",
+      "steps": [
+        {
+          "run": "cmd power set-fixed-performance-mode-enabled true",
+          "verify": {
+            "run": "dumpsys power | grep -m1 -i 'fixed'",
+            "contains": "true"
+          },
+          "undo": "cmd power set-fixed-performance-mode-enabled false",
+          "timeoutMs": 10000,
+          "optional": true
+        }
+      ]
+    },
+    {
+      "id": "bg-dexopt-job",
+      "category": "performance",
+      "risk": "moderate",
+      "requiresRoot": false,
+      "impact": "medium",
+      "appliesTo": {
+        "minSdk": 28
+      },
+      "titleKey": "recipe.bg_dexopt_job.title",
+      "summaryKey": "recipe.bg_dexopt_job.summary",
+      "steps": [
+        {
+          "run": "cmd package bg-dexopt-job",
+          "verify": {
+            "run": "echo ok",
+            "equals": "ok"
+          },
+          "timeoutMs": 300000,
+          "undo": null
+        }
+      ]
+    },
+    {
+      "id": "cached-apps-freezer",
+      "category": "performance",
+      "risk": "safe",
+      "requiresRoot": false,
+      "impact": "medium",
+      "appliesTo": {
+        "minSdk": 30
+      },
+      "titleKey": "recipe.cached_apps_freezer.title",
+      "summaryKey": "recipe.cached_apps_freezer.summary",
+      "steps": [
+        {
+          "run": "settings put global cached_apps_freezer enabled",
+          "verify": {
+            "run": "settings get global cached_apps_freezer",
+            "equals": "enabled"
+          },
+          "timeoutMs": 5000,
+          "undo": "settings put global cached_apps_freezer {{prev}}",
+          "undoIfUnset": "settings delete global cached_apps_freezer"
+        }
+      ]
+    },
+    {
+      "id": "adaptive-sleep-off",
+      "category": "performance",
+      "risk": "safe",
+      "requiresRoot": false,
+      "impact": "low",
+      "appliesTo": {
+        "minSdk": 29
+      },
+      "titleKey": "recipe.adaptive_sleep_off.title",
+      "summaryKey": "recipe.adaptive_sleep_off.summary",
+      "steps": [
+        {
+          "run": "settings put secure adaptive_sleep 0",
+          "verify": {
+            "run": "settings get secure adaptive_sleep",
+            "equals": "0"
+          },
+          "timeoutMs": 5000,
+          "undo": "settings put secure adaptive_sleep {{prev}}",
+          "undoIfUnset": "settings delete secure adaptive_sleep"
+        }
+      ]
+    },
+    {
+      "id": "auto-brightness-off",
+      "category": "performance",
+      "risk": "moderate",
+      "requiresRoot": false,
+      "impact": "low",
+      "appliesTo": {
+        "minSdk": 21
+      },
+      "titleKey": "recipe.auto_brightness_off.title",
+      "summaryKey": "recipe.auto_brightness_off.summary",
+      "steps": [
+        {
+          "run": "settings put system screen_brightness_mode 0",
+          "verify": {
+            "run": "settings get system screen_brightness_mode",
+            "equals": "0"
+          },
+          "timeoutMs": 5000,
+          "undo": "settings put system screen_brightness_mode {{prev}}",
+          "undoIfUnset": "settings delete system screen_brightness_mode"
+        }
+      ]
+    },
+    {
+      "id": "restrict-background-data",
+      "category": "battery",
+      "risk": "moderate",
+      "requiresRoot": false,
+      "impact": "medium",
+      "appliesTo": {
+        "minSdk": 24
+      },
+      "titleKey": "recipe.restrict_background_data.title",
+      "summaryKey": "recipe.restrict_background_data.summary",
+      "steps": [
+        {
+          "run": "cmd netpolicy set restrict-background true",
+          "verify": {
+            "run": "cmd netpolicy get restrict-background",
+            "contains": "true"
+          },
+          "timeoutMs": 10000,
+          "undo": "cmd netpolicy set restrict-background false"
+        }
+      ]
+    },
+    {
+      "id": "reduce-resolution-720p",
+      "category": "performance",
+      "risk": "advanced",
+      "requiresRoot": false,
+      "impact": "high",
+      "appliesTo": {
+        "minSdk": 21
+      },
+      "titleKey": "recipe.reduce_resolution_720p.title",
+      "summaryKey": "recipe.reduce_resolution_720p.summary",
+      "steps": [
+        {
+          "run": "wm size 1280x720",
+          "verify": {
+            "run": "wm size",
+            "contains": "Override size: 1280x720"
+          },
+          "timeoutMs": 10000,
+          "undo": "wm size reset"
+        }
+      ]
+    },
+    {
+      "id": "reduce-density-160",
+      "category": "performance",
+      "risk": "advanced",
+      "requiresRoot": false,
+      "impact": "high",
+      "appliesTo": {
+        "minSdk": 21
+      },
+      "titleKey": "recipe.reduce_density_160.title",
+      "summaryKey": "recipe.reduce_density_160.summary",
+      "steps": [
+        {
+          "run": "wm density 160",
+          "verify": {
+            "run": "wm density",
+            "contains": "Override density: 160"
+          },
+          "timeoutMs": 10000,
+          "undo": "wm density reset"
+        }
+      ]
+    },
+    {
+      "id": "cap-refresh-60",
+      "category": "battery",
+      "risk": "moderate",
+      "requiresRoot": false,
+      "impact": "medium",
+      "appliesTo": {
+        "minSdk": 30
+      },
+      "titleKey": "recipe.cap_refresh_60.title",
+      "summaryKey": "recipe.cap_refresh_60.summary",
+      "steps": [
+        {
+          "run": "settings put system peak_refresh_rate 60.0",
+          "verify": {
+            "run": "settings get system peak_refresh_rate",
+            "contains": "60"
+          },
+          "timeoutMs": 5000,
+          "undo": "settings put system peak_refresh_rate {{prev}}",
+          "undoIfUnset": "settings delete system peak_refresh_rate"
+        }
+      ]
+    },
+    {
+      "id": "wanboos-launcher",
+      "category": "tv",
+      "risk": "advanced",
+      "requiresRoot": true,
+      "impact": "high",
+      "appliesTo": {
+        "minSdk": 21
+      },
+      "titleKey": "recipe.wanboos_launcher.title",
+      "summaryKey": "recipe.wanboos_launcher.summary",
+      "steps": [
+        {
+          "type": "installSystemApk",
+          "run": "installSystemApk {{apkPath}}",
+          "apkPath": "{{apkPath}}",
+          "targetPath": "/system/priv-app/WanboOSLauncher/WanboOSLauncher.apk",
+          "mode": "0644",
+          "owner": "0:0",
+          "selinuxContext": "u:object_r:system_file:s0",
+          "disablePackages": ["com.google.android.tvlauncher"],
+          "verify": {
+            "run": "cmd package resolve-activity --brief --user 0 -a android.intent.action.MAIN -c android.intent.category.HOME",
+            "contains": "com.tv.launcher.custom"
+          },
+          "undo": "restoreSystemApk {{backupPath}}",
+          "timeoutMs": 300000
+        },
+        {
+          "run": "pm list packages com.tv.launcher.custom",
+          "verify": {
+            "run": "pm list packages com.tv.launcher.custom",
+            "contains": "com.tv.launcher.custom"
+          },
+          "undo": null,
+          "timeoutMs": 20000
+        },
+        {
+          "run": "cmd package resolve-activity --brief --user 0 -a android.intent.action.MAIN -c android.intent.category.HOME",
+          "verify": {
+            "run": "cmd package resolve-activity --brief --user 0 -a android.intent.action.MAIN -c android.intent.category.HOME",
+            "contains": "com.tv.launcher.custom"
+          },
+          "undo": null,
+          "timeoutMs": 20000
+        }
+      ]
+    }
+  ]
+}

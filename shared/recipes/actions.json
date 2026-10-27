@@ -1,0 +1,85 @@
+{
+  "schemaVersion": 1,
+  "note": "Acciones parametrizadas por paquete o valor. Se generan en tiempo de ejecucion, por eso no viven en recipes.json.",
+  "actions": [
+    {
+      "id": "kill-app",
+      "titleKey": "action.kill_app.title",
+      "paramKind": "package",
+      "risk": "safe",
+      "run": "am force-stop {{pkg}}",
+      "verify": { "run": "pidof {{pkg}}", "expectEmptyOrExitCode": 1 },
+      "undo": null,
+      "timeoutMs": 8000
+    },
+    {
+      "id": "clear-app-cache",
+      "titleKey": "action.clear_app_cache.title",
+      "paramKind": "package",
+      "risk": "moderate",
+      "run": "pm clear --cache-only {{pkg}}",
+      "verify": { "run": "echo ok", "equals": "ok" },
+      "undo": null,
+      "timeoutMs": 20000,
+      "minSdk": 30
+    },
+    {
+      "id": "compile-app",
+      "titleKey": "action.compile_app.title",
+      "paramKind": "package",
+      "risk": "moderate",
+      "run": "cmd package compile -m speed -f {{pkg}}",
+      "verify": { "run": "echo ok", "equals": "ok" },
+      "undo": "cmd package compile -m verify -f {{pkg}}",
+      "timeoutMs": 120000
+    },
+    {
+      "id": "restrict-standby",
+      "titleKey": "action.restrict_standby.title",
+      "paramKind": "package",
+      "risk": "moderate",
+      "run": "am set-standby-bucket {{pkg}} restricted",
+      "verify": { "run": "am get-standby-bucket {{pkg}}", "contains": "restricted" },
+      "undo": "am set-standby-bucket {{pkg}} active",
+      "timeoutMs": 10000
+    },
+    {
+      "id": "suspend-app",
+      "titleKey": "action.suspend_app.title",
+      "paramKind": "package",
+      "risk": "moderate",
+      "run": "am suspend --user 0 {{pkg}}",
+      "verify": { "run": "echo ok", "equals": "ok" },
+      "undo": "am unsuspend --user 0 {{pkg}}",
+      "timeoutMs": 10000
+    },
+    {
+      "id": "disable-app",
+      "titleKey": "action.disable_app.title",
+      "paramKind": "package",
+      "risk": "advanced",
+      "run": "pm disable-user --user 0 {{pkg}}",
+      "verify": { "run": "pm list packages -d {{pkg}}", "contains": "{{pkg}}" },
+      "undo": "pm enable {{pkg}}",
+      "timeoutMs": 10000,
+      "blocklist": [
+        "android",
+        "com.android.systemui",
+        "com.android.settings",
+        "com.android.shell",
+        "com.android.packageinstaller",
+        "com.google.android.packageinstaller"
+      ]
+    },
+    {
+      "id": "reset-battery-stats",
+      "titleKey": "action.reset_battery_stats.title",
+      "paramKind": "none",
+      "risk": "safe",
+      "run": "dumpsys batterystats --reset",
+      "verify": { "run": "echo ok", "equals": "ok" },
+      "undo": null,
+      "timeoutMs": 15000
+    }
+  ]
+}

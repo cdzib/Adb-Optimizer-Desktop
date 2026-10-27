@@ -1,0 +1,20 @@
+{
+  "name": "adb-optimizer",
+  "private": true,
+  "version": "0.1.0",
+  "packageManager": "pnpm@11.19.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @adb-optimizer/desktop dev",
+    "build": "pnpm --filter @adb-optimizer/desktop build",
+    "dist": "pnpm --filter @adb-optimizer/desktop dist",
+    "test": "pnpm --filter @adb-optimizer/mirror test && pnpm --filter @adb-optimizer/desktop test",
+    "typecheck": "pnpm --filter @adb-optimizer/desktop typecheck",
+    "dev:lab": "ADB_OPTIMIZER_LAB=1 pnpm --filter @adb-optimizer/desktop dev",
+    "lab:android": "bash scripts/lab/android-lab.sh up",
+    "lab:check": "bash scripts/lab/android-lab.sh check",
+    "lab:stop": "bash scripts/lab/android-lab.sh stop"
+  }
+}

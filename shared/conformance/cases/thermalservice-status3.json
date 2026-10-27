@@ -1,0 +1,15 @@
+{
+  "id": "thermalservice-status3",
+  "synthetic": true,
+  "capturedOn": null,
+  "sdk": null,
+  "command": "dumpsys thermalservice",
+  "stdout": "Thermal Status: 3\nIsStatusOverride: false\n\nThermal Status: 3\n  Current temperatures:\n    Temperature{mValue=48.2, mType=3, mName=CPU, mStatus=2}\n    Temperature{mValue=41.0, mType=1, mName=GPU, mStatus=1}\n  Cooling devices:\n",
+  "expected": {
+    "maxStatus": 3,
+    "temperatures": [
+      { "name": "CPU", "value": 48.2 },
+      { "name": "GPU", "value": 41.0 }
+    ]
+  }
+}

@@ -1,0 +1,20 @@
+node_modules/
+dist/
+release/
+build/
+.gradle/
+**/build/
+local.properties
+*.iml
+.idea/
+.DS_Store
+*.log
+.env
+.env.local
+.venv/
+__pycache__/
+
+# Artefactos de empaquetado y estado local de herramientas
+/artifacts/
+/packages.zip
+.opencode/

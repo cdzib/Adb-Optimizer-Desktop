@@ -17,9 +17,10 @@ export function HistoryScreen({ t, device }: Props): JSX.Element {
     setEntries(await window.api.journal())
   }, [])
 
+  // El journal es global: se lee tambien sin equipo conectado.
   useEffect(() => {
-    if (device) void load()
-  }, [device, load])
+    void load()
+  }, [load])
 
   const revert = async (id: string) => {
     setBusy(id)
@@ -35,14 +36,6 @@ export function HistoryScreen({ t, device }: Props): JSX.Element {
     } finally {
       setBusy(null)
     }
-  }
-
-  if (!device) {
-    return (
-      <div className="card">
-        <div className="empty">{t('error.notConnected')}</div>
-      </div>
-    )
   }
 
   if (entries.length === 0) {
@@ -62,7 +55,7 @@ export function HistoryScreen({ t, device }: Props): JSX.Element {
     <div className="stack">
       {error && <div className="alert error">{error}</div>}
       <section className="card">
-        <h2>{t('history.title')}</h2>
+        <h2>Cambios registrados</h2>
         <ul className="list">
           {entries.map((entry) => {
             const expanded = open === entry.id
@@ -86,7 +79,15 @@ export function HistoryScreen({ t, device }: Props): JSX.Element {
                     <button
                       type="button"
                       className="ghost small"
-                      disabled={!reversible || Boolean(entry.revertedAt) || busy === entry.id}
+                      disabled={
+                        !reversible ||
+                        Boolean(entry.revertedAt) ||
+                        busy === entry.id ||
+                        device?.id !== entry.deviceId
+                      }
+                      title={
+                        device?.id === entry.deviceId ? undefined : 'Conecta ese equipo para deshacer'
+                      }
                       onClick={() => void revert(entry.id)}
                     >
                       {entry.revertedAt

@@ -369,3 +369,272 @@ export interface DpcResult {
   ok: boolean
   message: string
 }
+
+/* ---------------------------------------------------------------------------
+ * Paridad con la app Android: consola, logcat, inspector, ajustes del sistema,
+ * Doze y energia, archivos, perfiles de apps, debloater y diagnostico ampliado.
+ * ------------------------------------------------------------------------- */
+
+export interface ConsoleResult {
+  command: string
+  stdout: string
+  stderr: string
+  exitCode: number
+  durationMs: number
+  timedOut: boolean
+}
+
+export type LogcatLevel = 'V' | 'D' | 'I' | 'W' | 'E' | 'F'
+
+export interface LogcatEntry {
+  time: string
+  pid: string
+  tid: string
+  level: LogcatLevel
+  tag: string
+  message: string
+}
+
+export interface InspectorPermission {
+  name: string
+  granted: boolean | null
+}
+
+export type InspectorComponentKind = 'activity' | 'service' | 'receiver' | 'provider'
+
+export interface InspectorComponent {
+  kind: InspectorComponentKind
+  className: string
+}
+
+export interface InspectorAppOp {
+  name: string
+  mode: string
+}
+
+export interface AppInspection {
+  packageName: string
+  permissions: InspectorPermission[]
+  appOps: InspectorAppOp[]
+  components: InspectorComponent[]
+  signature: string | null
+  apkSha256: string | null
+}
+
+export type SettingsNamespace = 'global' | 'secure' | 'system'
+
+export interface SettingEntry {
+  key: string
+  value: string
+}
+
+export interface SettingsChange {
+  id: string
+  namespace: SettingsNamespace
+  key: string
+  previousValue: string
+  newValue: string
+  appliedAt: string
+}
+
+export interface SettingsWriteResult {
+  ok: boolean
+  value: string
+}
+
+export interface QuickSettings {
+  nightMode: string | null
+  screenOffTimeoutMs: number | null
+  brightness: number | null
+  batterySaver: boolean | null
+}
+
+export type DozeAction = 'force' | 'step' | 'unforce' | 'motion'
+
+export type DozePhase = 'active' | 'inactive' | 'pending' | 'idle' | 'maintenance' | 'unknown'
+
+export interface DozeStatus {
+  deep: string | null
+  light: string | null
+  forced: boolean | null
+  phase: DozePhase
+}
+
+export type DevicePowerAction = 'reboot' | 'shutdown' | 'recovery' | 'bootloader' | 'restart-system-ui'
+
+export interface PowerResult {
+  ok: boolean
+  message: string
+}
+
+export interface RemoteFileEntry {
+  name: string
+  path: string
+  isDirectory: boolean
+  isLink: boolean
+  sizeBytes: number
+  mode: string
+  isApk: boolean
+}
+
+export interface InstallOptions {
+  grantPermissions: boolean
+  allowDowngrade: boolean
+  allowTest: boolean
+}
+
+export type ProfileAppState = 'ENABLED' | 'DISABLED' | 'UNINSTALLED'
+
+export interface ProfileApp {
+  packageName: string
+  label: string
+  state: ProfileAppState
+}
+
+export interface AppProfile {
+  id: string
+  name: string
+  createdAt: number
+  apps: ProfileApp[]
+  watched: boolean
+}
+
+export type ProfileStepKind = 'REINSTALL' | 'ENABLE' | 'DISABLE' | 'UNINSTALL'
+
+export interface ProfileStep {
+  kind: ProfileStepKind
+  packages: string[]
+}
+
+export interface ProfilePlan {
+  steps: ProfileStep[]
+  same: number
+  missing: number
+  blocked: number
+}
+
+export interface ProfileChange {
+  packageName: string
+  from: ProfileAppState
+  to: ProfileAppState
+}
+
+export interface ProfileRun {
+  id: string
+  profileId: string
+  profileName: string
+  appliedAt: number
+  changes: ProfileChange[]
+  failures: string[]
+}
+
+export interface ProfilesDocument {
+  profiles: AppProfile[]
+  runs: ProfileRun[]
+}
+
+export interface ProfileProgress {
+  done: number
+  total: number
+  packageName: string
+  kind: ProfileStepKind
+}
+
+export type DebloatRisk = 'recommended' | 'advanced' | 'expert'
+
+export interface DebloatEntry {
+  packageName: string
+  source: string
+  risk: DebloatRisk
+  description: string
+}
+
+export interface DebloatCatalogState {
+  entries: DebloatEntry[]
+  updatedAt: number | null
+}
+
+export interface DebloatSuggestion {
+  packageName: string
+  label: string
+  state: ProfileAppState
+  risk: DebloatRisk
+  description: string
+  source: string
+}
+
+export type DebloatAction = 'FREEZE' | 'UNFREEZE' | 'UNINSTALL' | 'RESTORE'
+
+export interface DebloatRestoreItem {
+  packageName: string
+  label: string
+  state: ProfileAppState
+}
+
+export interface DebloatRun {
+  action: DebloatAction
+  changes: ProfileChange[]
+  failures: string[]
+}
+
+export interface DiagnosticsBattery {
+  level: number | null
+  health: string | null
+  status: string | null
+  voltageV: number | null
+  temperatureC: number | null
+  technology: string | null
+  chargeCounterUah: number | null
+  currentMa: number | null
+}
+
+export interface CpuCoreFrequency {
+  index: number
+  currentMhz: number | null
+  minMhz: number | null
+  maxMhz: number | null
+}
+
+export interface DiagnosticsScreenInfo {
+  width: number | null
+  height: number | null
+  densityDpi: number | null
+  refreshRateHz: number | null
+}
+
+export interface DiagnosticsSensor {
+  name: string
+  vendor: string
+  type: string
+}
+
+export interface DiagnosticsNetworkInterface {
+  name: string
+  address: string
+  prefix: number | null
+}
+
+export interface DeviceDiagnostics {
+  hardware: {
+    brand: string | null
+    product: string | null
+    board: string | null
+    hardware: string | null
+    abis: string | null
+    usbHost: boolean | null
+  }
+  system: {
+    patch: string | null
+    build: string | null
+    kernel: string | null
+    vm: string | null
+    baseband: string | null
+  }
+  gles: string | null
+  vulkan: string | null
+  battery: DiagnosticsBattery
+  cpuCores: CpuCoreFrequency[]
+  screen: DiagnosticsScreenInfo
+  sensors: DiagnosticsSensor[]
+  network: DiagnosticsNetworkInterface[]
+}

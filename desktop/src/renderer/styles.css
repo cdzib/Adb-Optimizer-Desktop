@@ -42,6 +42,30 @@
   --red: #9e2a22;
   --focus: #0b6bcb;
 
+  --input-bg: #fff;
+  --seg-hover: #ffffff66;
+  --track: #dae2e5;
+  --selection: #0f4a5820;
+  --teal-wash: #0f4a5808;
+  --teal-wash-2: #0f4a580c;
+  --teal-wash-3: #0f4a5806;
+  --teal-ring: #0f4a5814;
+  --teal-hover: #0f4a58;
+  --green-border: #1b6f5140;
+  --amber-border: #8c5b0e40;
+  --red-border: #9e2a2240;
+  --red-border-strong: #9e2a2277;
+  --red-wash: #9e2a2207;
+  --red-wash-2: #9e2a220a;
+  --red-text: #7c211b;
+  --green-wash: #1b6f5107;
+  --green-text: #145a40;
+  --amber-wash: #8c5b0e07;
+  --amber-text: #744a0b;
+  --orange-hover: #9c390c;
+  --console-bg: #0f1416;
+  --console-text: #cfe3e6;
+
   --font-ui: 'Archivo', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-mono: 'Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
 
@@ -70,6 +94,50 @@
   --base: 180ms;
 }
 
+/* Consola de servicio fria: no negro puro, papel y tinta invertidos. */
+:root[data-theme='dark'] {
+  --paper: #0d1519;
+  --paper-2: #121d22;
+  --surface: #162228;
+  --ink: #e7eef0;
+  --ink-2: #b6c6cc;
+  --muted: #8ba0a9;
+  --rule: #2a3c44;
+  --rule-faint: #213138;
+  --rule-strong: #3d555f;
+  --teal: #6fb7c4;
+  --orange: #b94b16;
+  --orange-ink: #fffaf6;
+  --green: #4fb98b;
+  --amber: #d9a441;
+  --red: #e06a5f;
+  --focus: #6aa9ff;
+
+  --input-bg: #0d1519;
+  --seg-hover: #ffffff10;
+  --track: #23333a;
+  --selection: #6fb7c440;
+  --teal-wash: #6fb7c40a;
+  --teal-wash-2: #6fb7c40e;
+  --teal-wash-3: #6fb7c407;
+  --teal-ring: #6fb7c433;
+  --teal-hover: #6fb7c4;
+  --green-border: #4fb98b55;
+  --amber-border: #d9a44155;
+  --red-border: #e06a5f55;
+  --red-border-strong: #e06a5f99;
+  --red-wash: #e06a5f12;
+  --red-wash-2: #e06a5f1a;
+  --red-text: #ff9a91;
+  --green-wash: #4fb98b12;
+  --green-text: #7fd7af;
+  --amber-wash: #d9a44112;
+  --amber-text: #e8bd6a;
+  --orange-hover: #a84212;
+  --console-bg: #0f1416;
+  --console-text: #cfe3e6;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -94,7 +162,7 @@ body {
 }
 
 ::selection {
-  background: #0f4a5820;
+  background: var(--selection);
 }
 
 :focus-visible {
@@ -137,14 +205,14 @@ button.primary {
 }
 
 button.primary:hover:not(:disabled) {
-  background: #9c390c;
-  border-color: #9c390c;
+  background: var(--orange-hover);
+  border-color: var(--orange-hover);
 }
 
 button.primary:disabled {
   background: var(--rule);
   border-color: var(--rule);
-  color: #ffffff;
+  color: var(--orange-ink);
   opacity: 1;
 }
 
@@ -163,7 +231,7 @@ button.ghost:hover:not(:disabled) {
 button.danger {
   background: var(--red);
   border-color: var(--red);
-  color: #fff7f6;
+  color: var(--orange-ink);
   font-weight: 600;
 }
 
@@ -178,6 +246,7 @@ button.small {
 .app {
   display: grid;
   grid-template-columns: var(--rail) minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
   height: 100%;
 }
 
@@ -257,12 +326,12 @@ button.small {
 }
 
 .nav-item:hover {
-  background: #0f4a5808;
+  background: var(--teal-wash);
   color: var(--ink);
 }
 
 .nav-item.active {
-  background: #0f4a580c;
+  background: var(--teal-wash-2);
   border-left-color: var(--teal);
   color: var(--ink);
   font-weight: 600;
@@ -305,6 +374,7 @@ button.small {
   display: flex;
   flex-direction: column;
   min-height: 0;
+  overflow: hidden;
   background: var(--surface);
 }
 
@@ -477,11 +547,11 @@ button.small {
 }
 
 .list.selectable .list-row:hover {
-  background: #0f4a5806;
+  background: var(--teal-wash-3);
 }
 
 .list-row.selected {
-  background: #0f4a5808;
+  background: var(--teal-wash);
 }
 
 .list-row.disabled {
@@ -527,32 +597,32 @@ button.small {
 
 .badge.ok {
   color: var(--green);
-  border-color: #1b6f5140;
+  border-color: var(--green-border);
 }
 
 .badge.warn {
   color: var(--amber);
-  border-color: #8c5b0e40;
+  border-color: var(--amber-border);
 }
 
 .badge.bad {
   color: var(--red);
-  border-color: #9e2a2240;
+  border-color: var(--red-border);
 }
 
 .badge.risk-safe {
   color: var(--green);
-  border-color: #1b6f5140;
+  border-color: var(--green-border);
 }
 
 .badge.risk-moderate {
   color: var(--amber);
-  border-color: #8c5b0e40;
+  border-color: var(--amber-border);
 }
 
 .badge.risk-advanced {
   color: var(--red);
-  border-color: #9e2a2240;
+  border-color: var(--red-border);
 }
 
 .checkbox {
@@ -594,7 +664,7 @@ button.small {
 
 .field input,
 .search {
-  background: #fff;
+  background: var(--input-bg);
   border: 1px solid var(--rule);
   border-radius: 2px;
   padding: 7px 10px;
@@ -616,7 +686,7 @@ button.small {
 .field input:focus,
 .search:focus {
   border-color: var(--teal);
-  box-shadow: 0 0 0 3px #0f4a5814;
+  box-shadow: 0 0 0 3px var(--teal-ring);
 }
 
 .field > span {
@@ -664,7 +734,7 @@ button.small {
 
 .segmented button:hover:not(.active) {
   color: var(--ink);
-  background: #ffffff66;
+  background: var(--seg-hover);
 }
 
 .segmented button.active {
@@ -743,7 +813,7 @@ button.small {
 .meter-seg {
   flex: 1;
   height: 55%;
-  background: #dae2e5;
+  background: var(--track);
   border-radius: 1px;
   transition:
     height 360ms var(--ease),
@@ -843,7 +913,7 @@ button.small {
   height: 4px;
   width: 100%;
   max-width: 620px;
-  background: #dae2e5;
+  background: var(--track);
   border-radius: 1px;
   overflow: hidden;
 }
@@ -892,7 +962,7 @@ button.small {
 .bar {
   margin-top: 8px;
   height: 3px;
-  background: #dae2e5;
+  background: var(--track);
   overflow: hidden;
 }
 
@@ -943,7 +1013,7 @@ button.small {
 
 .app-row .ghost.danger-text:hover:not(:disabled) {
   color: var(--red);
-  border-color: #9e2a2240;
+  border-color: var(--red-border);
 }
 
 .plan-row.risk-safe {
@@ -1039,20 +1109,20 @@ button.small {
 
 .alert.error {
   border-left-color: var(--red);
-  background: #9e2a2207;
-  color: #7c211b;
+  background: var(--red-wash);
+  color: var(--red-text);
 }
 
 .alert.ok {
   border-left-color: var(--green);
-  background: #1b6f5107;
-  color: #145a40;
+  background: var(--green-wash);
+  color: var(--green-text);
 }
 
 .alert.warn {
   border-left-color: var(--amber);
-  background: #8c5b0e07;
-  color: #744a0b;
+  background: var(--amber-wash);
+  color: var(--amber-text);
 }
 
 .alert.with-action {
@@ -1324,12 +1394,12 @@ button.small {
 
 .danger-text {
   color: var(--red);
-  border-color: #9e2a2244;
+  border-color: var(--red-border);
 }
 
 .danger-text:hover:not(:disabled) {
-  background: #9e2a220a;
-  border-color: #9e2a2277;
+  background: var(--red-wash-2);
+  border-color: var(--red-border-strong);
 }
 
 /* ------------------------------------------------------------------ modal */
@@ -1486,7 +1556,7 @@ button.small {
 }
 
 .device-row:hover {
-  background: #0f4a5805;
+  background: var(--teal-wash-3);
 }
 
 .device-line {
@@ -1606,7 +1676,7 @@ button.small {
 }
 
 .disclose > summary:hover {
-  color: var(--teal);
+  color: var(--teal-hover);
 }
 
 .disclose > summary::-webkit-details-marker {
@@ -1793,6 +1863,54 @@ button.small {
   font-size: 10px;
 }
 
+/* ------------------------------------------------------------------ theme switch */
+
+.theme-switch {
+  display: inline-flex;
+  flex: none;
+  height: 26px;
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  overflow: hidden;
+  background: transparent;
+}
+
+.theme-switch button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 100%;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-right: 1px solid var(--rule);
+  border-radius: 0;
+  background: transparent;
+  color: var(--muted);
+}
+
+.theme-switch button:last-child {
+  border-right: 0;
+}
+
+.theme-switch button:hover:not(.active) {
+  color: var(--ink);
+  background: var(--seg-hover);
+}
+
+.theme-switch button.active {
+  color: var(--ink);
+  background: var(--paper-2);
+  box-shadow: inset 0 -2px 0 var(--teal);
+}
+
+.theme-switch svg {
+  display: block;
+  width: 14px;
+  height: 14px;
+}
+
 /* ------------------------------------------------------------------ misc */
 
 .topbar .ghost {
@@ -1845,8 +1963,8 @@ button.small {
   overflow: auto;
   padding: 12px;
   border-radius: 10px;
-  background: #0f1416;
-  color: #cfe3e6;
+  background: var(--console-bg);
+  color: var(--console-text);
   font-family: 'Plex Mono', ui-monospace, monospace;
   font-size: 12px;
   white-space: pre-wrap;

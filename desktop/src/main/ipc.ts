@@ -2,10 +2,10 @@ import { existsSync, readFileSync, statSync } from 'node:fs'
 import { basename, join } from 'node:path'
 import { dialog, ipcMain, shell } from 'electron'
 import { registerMirrorIpc } from '@adb-optimizer/mirror'
-import type { DeviceInfo, InstalledApp, Profile } from '../shared/types'
+import type { DeviceInfo, InstallOptions, InstalledApp, Profile } from '../shared/types'
 import { AdbClient, AdbError } from './adb/adb-client'
 import type { CommandRunner } from './adb/runner'
-import { AppService, parsePackageList } from './apps/app-service'
+import { AppService, loadProtectedPackages, parsePackageList } from './apps/app-service'
 import { DpcService } from './apps/dpc-service'
 import { buildProvisionScript } from './apps/dpc-script'
 import { MdnsBrowser } from './adb/mdns-browser'
@@ -19,6 +19,17 @@ import { RecipeEngine } from './optimization/recipe-engine'
 import { SystemAppService } from './optimization/system-app'
 import { SystemLauncherService } from './optimization/system-launcher'
 import { resolveLocale } from './security'
+import { SessionDevices } from './session-state'
+import type { FeatureContext } from './features/context'
+import { registerConsoleIpc } from './console/console-service'
+import { registerLogcatIpc } from './logcat/logcat-service'
+import { registerInspectorIpc } from './inspector/inspector-service'
+import { registerSettingsIpc } from './settings/settings-service'
+import { registerFilesIpc } from './files/file-service'
+import { registerPowerIpc } from './power/power-service'
+import { registerDiagnosticsIpc } from './diagnostics/diagnostics-service'
+import { registerProfilesIpc } from './profiles/profiles-service'
+import { registerDebloatIpc } from './debloat/debloat-service'
 
 export interface IpcDeps {
   client: AdbClient
@@ -44,6 +55,7 @@ interface Session {
 
 export function registerIpc(deps: IpcDeps): void {
   const session: Session = { device: null }
+  const sessionDevices = new SessionDevices()
   let selectedLauncherApk: string | null = null
   let verifiedLauncher: { apk: string; packageName: string | null } | null = null
   const systemRecipe = deps.catalog.catalog.recipes.find((item) => item.id === 'wanboos-launcher')
@@ -66,7 +78,10 @@ export function registerIpc(deps: IpcDeps): void {
     // Respaldo cuando Bonjour no ve el puerto TLS anunciado.
     fallbackDiscover: () => deps.client.mdnsServices(),
     onStatus: (status) => {
-      if (status.device) session.device = status.device
+      if (status.device) {
+        session.device = status.device
+        sessionDevices.upsert(status.device)
+      }
       deps.onLog(
         `qr ${status.state}${status.address ? ` ${status.address}` : ''}${
           status.message ? ` · ${status.message}` : ''
@@ -115,6 +130,7 @@ export function registerIpc(deps: IpcDeps): void {
     const info = await deps.client.connectDevice(deviceId)
     deps.onLog(`connect ${deviceId} (${info.model})`)
     session.device = info
+    sessionDevices.upsert(info)
     return info
   })
 
@@ -143,19 +159,71 @@ export function registerIpc(deps: IpcDeps): void {
     qr.cancel()
   })
 
+  /**
+   * Desconecta un equipo de la sesion. Sin `id` actua sobre el activo.
+   * Solo detiene scrcpy cuando el que se va es el activo; el journal y el
+   * estado local de los demas equipos se conserva.
+   */
+  const disconnectOne = async (id?: string): Promise<void> => {
+    const target = id ?? session.device?.id
+    if (!target) {
+      session.device = null
+      return
+    }
+    const isActive = target === session.device?.id
+    if (isActive) {
+      deps.scrcpy.stop()
+      session.device = null
+    }
+    await deps.client.disconnect(target)
+    sessionDevices.remove(target)
+  }
+
   ipcMain.handle('adb:disconnect', async () => {
     qr.cancel()
-    const current = session.device?.id
-    deps.scrcpy.stop()
-    session.device = null
-    if (current) {
-      await deps.client.disconnect(current)
+    await disconnectOne()
+  })
+
+  ipcMain.handle('session:devices', async () => {
+    try {
+      const visible = await deps.client.listDevices()
+      sessionDevices.prune(
+        visible.filter((device) => device.state === 'device').map((device) => device.id),
+        session.device?.id,
+      )
+    } catch {
+      // ADB no responde: devolvemos lo que ya conocemos sin romper la pantalla.
     }
+    return sessionDevices.list()
+  })
+
+  ipcMain.handle('device:switch', async (_event, id: unknown) => {
+    if (typeof id !== 'string' || id.trim().length === 0) {
+      throw new Error('El identificador del equipo no es valido.')
+    }
+    const target = id.trim()
+    if (session.device?.id === target) return session.device
+
+    deps.scrcpy.stop()
+    const info = await deps.client.connectDevice(target)
+    session.device = info
+    sessionDevices.upsert(info)
+    deps.onLog(`switch ${target} (${info.model})`)
+    return info
+  })
+
+  ipcMain.handle('device:disconnect', async (_event, id?: unknown) => {
+    if (id !== undefined && id !== null && typeof id !== 'string') {
+      throw new Error('El identificador del equipo no es valido.')
+    }
+    const target = typeof id === 'string' && id.trim().length > 0 ? id.trim() : undefined
+    await disconnectOne(target)
   })
 
   ipcMain.handle('device:info', async () => {
     if (!deps.client.deviceSerial) return null
     session.device = await deps.client.getInfo()
+    sessionDevices.upsert(session.device)
     return session.device
   })
 
@@ -424,12 +492,17 @@ export function registerIpc(deps: IpcDeps): void {
     return result.canceled ? [] : result.filePaths
   })
 
-  ipcMain.handle('apps:install-apks', async (_event, apkPaths: string[]) => {
+  ipcMain.handle('apps:install-apks', async (_event, apkPaths: string[], options?: InstallOptions) => {
     if (!session.device) throw new AdbError('No hay dispositivo conectado.', 'offline')
+    assertLabAllowed(session.device.id, 'instalar APK')
     const files = apkPaths.filter((path) => existsSync(path))
     if (files.length !== apkPaths.length) throw new Error('Uno de los APK seleccionados no existe.')
-    deps.onLog(`install-multiple ${files.length} archivo(s)`)
-    const message = await deps.client.installMultiple(files)
+    const flags = ['-r']
+    if (options?.grantPermissions === true) flags.push('-g')
+    if (options?.allowDowngrade === true) flags.push('-d')
+    if (options?.allowTest === true) flags.push('-t')
+    deps.onLog(`install-multiple ${files.length} archivo(s) · ${flags.join(' ')}`)
+    const message = await deps.client.installMultiple(files, flags)
     const ok = /success/i.test(message) && !/failure/i.test(message)
     return { ok, message }
   })
@@ -541,4 +614,27 @@ export function registerIpc(deps: IpcDeps): void {
     deps.onLog(`undo ${entryId}: ${result.ok ? 'ok' : 'fallo'}`)
     return result
   })
+
+  // ---------------------------------------------------------------- paridad Android
+  // Cada feature registra sus canales con el mismo contexto: el cliente ADB de la
+  // sesion, el directorio de estado y los eventos hacia la ventana.
+  const protectedPackages = loadProtectedPackages(
+    join(deps.sharedDir, 'apps', 'protected-packages.json'),
+  )
+  const features: FeatureContext = {
+    client: deps.client,
+    dataDir: deps.dataDir,
+    send: (channel, payload) => deps.send(channel, payload),
+    log: (line) => deps.onLog(line),
+  }
+
+  registerConsoleIpc(ipcMain, features)
+  registerLogcatIpc(ipcMain, features)
+  registerInspectorIpc(ipcMain, features)
+  registerSettingsIpc(ipcMain, features)
+  registerFilesIpc(ipcMain, features)
+  registerPowerIpc(ipcMain, features)
+  registerDiagnosticsIpc(ipcMain, features)
+  registerProfilesIpc(ipcMain, features, protectedPackages)
+  registerDebloatIpc(ipcMain, features, protectedPackages)
 }

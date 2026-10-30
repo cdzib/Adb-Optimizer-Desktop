@@ -5,6 +5,11 @@ import type {
   PlanItem, Profile, QrDiagnostics, QrStartResult, QrStatus, Recipe, RemoteLauncher,
   RunResult, ScrcpyStatus, StepResult, SystemAccessReport, SystemAppCandidate, SystemLauncherDiagnostics,
   FlashDiagnostics, FlashImage, FlashResult,
+  AppInspection, ConsoleResult, DebloatAction, DebloatCatalogState, DebloatRestoreItem,
+  DebloatRun, DebloatSuggestion, DeviceDiagnostics, DevicePowerAction, DozeAction, DozeStatus,
+  InstallOptions, LogcatEntry, PowerResult, ProfileApp, ProfileAppState, ProfileChange,
+  ProfilePlan, ProfileProgress, ProfileRun, ProfilesDocument, QuickSettings, RemoteFileEntry,
+  SettingEntry, SettingsChange, SettingsNamespace, SettingsWriteResult, AppProfile,
 } from '../shared/types'
 
 interface DesktopApi {
@@ -22,6 +27,9 @@ interface DesktopApi {
   cancelQr(): Promise<void>
   onQrStatus(listener: (status: QrStatus) => void): () => void
   disconnect(): Promise<void>
+  sessionDevices(): Promise<DeviceInfo[]>
+  switchDevice(id: string): Promise<DeviceInfo>
+  disconnectDevice(id?: string): Promise<void>
   deviceInfo(): Promise<DeviceInfo | null>
   metrics(): Promise<DeviceMetrics | null>
   recipes(): Promise<Recipe[]>
@@ -29,7 +37,7 @@ interface DesktopApi {
   plan(profile: Profile): Promise<PlanItem[]>
   run(recipeIds: string[], dryRun: boolean): Promise<RunResult[]>
   pickApks(): Promise<string[]>
-  installApks(apkPaths: string[]): Promise<ApkInstallResult>
+  installApks(apkPaths: string[], options?: InstallOptions): Promise<ApkInstallResult>
   extractApk(packageName: string): Promise<ApkExtractResult | null>
   openFolder(path: string): Promise<void>
   launchers(): Promise<RemoteLauncher[]>
@@ -83,6 +91,58 @@ interface DesktopApi {
   scrcpyStart(): Promise<ScrcpyStatus>
   scrcpyStop(): Promise<ScrcpyStatus>
   onScrcpyStatus(listener: (status: ScrcpyStatus) => void): () => void
+
+  /* ---------------------------- paridad con Android */
+  consoleHistory(): Promise<string[]>
+  consoleRun(command: string): Promise<ConsoleResult>
+  consoleClearHistory(): Promise<void>
+
+  logcatRead(limit: number, since?: string): Promise<LogcatEntry[]>
+  logcatClear(): Promise<void>
+  logcatExport(entries: LogcatEntry[]): Promise<string | null>
+
+  inspectApp(packageName: string): Promise<AppInspection>
+
+  settingsList(namespace: SettingsNamespace): Promise<SettingEntry[]>
+  settingsSave(namespace: SettingsNamespace, key: string, value: string): Promise<SettingsWriteResult>
+  settingsHistory(): Promise<SettingsChange[]>
+  settingsUndo(id: string): Promise<SettingsWriteResult>
+  settingsQuick(): Promise<QuickSettings>
+  settingsSetNightMode(mode: 'yes' | 'no' | 'auto'): Promise<SettingsWriteResult>
+
+  dozeStatus(): Promise<DozeStatus>
+  dozeRun(action: DozeAction): Promise<DozeStatus>
+  devicePower(action: DevicePowerAction): Promise<PowerResult>
+
+  filesList(path: string): Promise<RemoteFileEntry[]>
+  filesReadText(path: string): Promise<string>
+  filesMkdir(parent: string, name: string): Promise<void>
+  filesRename(path: string, newName: string): Promise<void>
+  filesDelete(path: string): Promise<void>
+  filesInstallApk(path: string, options?: InstallOptions): Promise<{ ok: boolean; message: string }>
+  filesPull(path: string): Promise<{ directory: string; files: string[] } | null>
+  filesPush(targetDir: string): Promise<{ files: string[] } | null>
+
+  profilesDocument(): Promise<ProfilesDocument>
+  profilesSave(profile: AppProfile): Promise<AppProfile>
+  profilesDelete(id: string): Promise<boolean>
+  profilesSetWatched(id: string, watched: boolean): Promise<boolean>
+  profilesStates(): Promise<Record<string, ProfileAppState>>
+  profilesSnapshot(): Promise<ProfileApp[]>
+  profilesPlan(profile: AppProfile): Promise<ProfilePlan>
+  profilesApply(profile: AppProfile): Promise<ProfileRun>
+  profilesUndo(changes: ProfileChange[]): Promise<number>
+  onProfileProgress(listener: (progress: ProfileProgress) => void): () => void
+
+  debloatCatalog(): Promise<DebloatCatalogState>
+  debloatDownload(): Promise<DebloatCatalogState>
+  debloatSuggestions(): Promise<DebloatSuggestion[]>
+  debloatRestorable(): Promise<DebloatRestoreItem[]>
+  debloatApply(action: DebloatAction, targets: string[]): Promise<DebloatRun>
+  debloatUndo(run: DebloatRun): Promise<number>
+  debloatRestore(targets: string[]): Promise<DebloatRun>
+
+  deviceDiagnostics(): Promise<DeviceDiagnostics>
 }
 
 const api: DesktopApi = {
@@ -100,6 +160,9 @@ const api: DesktopApi = {
   cancelQr: () => ipcRenderer.invoke('qr:cancel'),
   onQrStatus: (listener) => subscribe('qr:status', listener),
   disconnect: () => ipcRenderer.invoke('adb:disconnect'),
+  sessionDevices: () => ipcRenderer.invoke('session:devices'),
+  switchDevice: (id) => ipcRenderer.invoke('device:switch', id),
+  disconnectDevice: (id) => ipcRenderer.invoke('device:disconnect', id),
   deviceInfo: () => ipcRenderer.invoke('device:info'),
   metrics: () => ipcRenderer.invoke('device:metrics'),
   recipes: () => ipcRenderer.invoke('catalog:recipes'),
@@ -107,7 +170,7 @@ const api: DesktopApi = {
   plan: (profile) => ipcRenderer.invoke('optimize:plan', profile),
   run: (recipeIds, dryRun) => ipcRenderer.invoke('optimize:run', recipeIds, dryRun),
   pickApks: () => ipcRenderer.invoke('apps:pick-apks'),
-  installApks: (paths) => ipcRenderer.invoke('apps:install-apks', paths),
+  installApks: (paths, options) => ipcRenderer.invoke('apps:install-apks', paths, options),
   extractApk: (packageName) => ipcRenderer.invoke('apps:extract-apk', packageName),
   openFolder: (path) => ipcRenderer.invoke('apps:open-folder', path),
   launchers: () => ipcRenderer.invoke('device:launchers'),
@@ -155,6 +218,57 @@ const api: DesktopApi = {
   scrcpyStart: () => ipcRenderer.invoke('scrcpy:start'),
   scrcpyStop: () => ipcRenderer.invoke('scrcpy:stop'),
   onScrcpyStatus: (listener) => subscribe('scrcpy:status', listener),
+
+  consoleHistory: () => ipcRenderer.invoke('console:history'),
+  consoleRun: (command) => ipcRenderer.invoke('console:run', command),
+  consoleClearHistory: () => ipcRenderer.invoke('console:clear'),
+
+  logcatRead: (limit, since) => ipcRenderer.invoke('logcat:read', limit, since),
+  logcatClear: () => ipcRenderer.invoke('logcat:clear'),
+  logcatExport: (entries) => ipcRenderer.invoke('logcat:export', entries),
+
+  inspectApp: (packageName) => ipcRenderer.invoke('inspector:inspect', packageName),
+
+  settingsList: (namespace) => ipcRenderer.invoke('settingsdb:list', namespace),
+  settingsSave: (namespace, key, value) => ipcRenderer.invoke('settingsdb:save', namespace, key, value),
+  settingsHistory: () => ipcRenderer.invoke('settingsdb:history'),
+  settingsUndo: (id) => ipcRenderer.invoke('settingsdb:undo', id),
+  settingsQuick: () => ipcRenderer.invoke('settingsdb:quick'),
+  settingsSetNightMode: (mode) => ipcRenderer.invoke('settingsdb:night', mode),
+
+  dozeStatus: () => ipcRenderer.invoke('doze:status'),
+  dozeRun: (action) => ipcRenderer.invoke('doze:run', action),
+  devicePower: (action) => ipcRenderer.invoke('power:run', action),
+
+  filesList: (path) => ipcRenderer.invoke('files:list', path),
+  filesReadText: (path) => ipcRenderer.invoke('files:read', path),
+  filesMkdir: (parent, name) => ipcRenderer.invoke('files:mkdir', parent, name),
+  filesRename: (path, newName) => ipcRenderer.invoke('files:rename', path, newName),
+  filesDelete: (path) => ipcRenderer.invoke('files:delete', path),
+  filesInstallApk: (path, options) => ipcRenderer.invoke('files:install-apk', path, options),
+  filesPull: (path) => ipcRenderer.invoke('files:pull', path),
+  filesPush: (targetDir) => ipcRenderer.invoke('files:push', targetDir),
+
+  profilesDocument: () => ipcRenderer.invoke('profiles:document'),
+  profilesSave: (profile) => ipcRenderer.invoke('profiles:save', profile),
+  profilesDelete: (id) => ipcRenderer.invoke('profiles:delete', id),
+  profilesSetWatched: (id, watched) => ipcRenderer.invoke('profiles:watch', id, watched),
+  profilesStates: () => ipcRenderer.invoke('profiles:states'),
+  profilesSnapshot: () => ipcRenderer.invoke('profiles:snapshot'),
+  profilesPlan: (profile) => ipcRenderer.invoke('profiles:plan', profile),
+  profilesApply: (profile) => ipcRenderer.invoke('profiles:apply', profile),
+  profilesUndo: (changes) => ipcRenderer.invoke('profiles:undo', changes),
+  onProfileProgress: (listener) => subscribe('profiles:progress', listener),
+
+  debloatCatalog: () => ipcRenderer.invoke('debloat:catalog'),
+  debloatDownload: () => ipcRenderer.invoke('debloat:download'),
+  debloatSuggestions: () => ipcRenderer.invoke('debloat:suggestions'),
+  debloatRestorable: () => ipcRenderer.invoke('debloat:restorable'),
+  debloatApply: (action, targets) => ipcRenderer.invoke('debloat:apply', action, targets),
+  debloatUndo: (run) => ipcRenderer.invoke('debloat:undo', run),
+  debloatRestore: (targets) => ipcRenderer.invoke('debloat:restore', targets),
+
+  deviceDiagnostics: () => ipcRenderer.invoke('diagnostics:read'),
 }
 
 function subscribe<T>(channel: string, listener: (value: T) => void): () => void {

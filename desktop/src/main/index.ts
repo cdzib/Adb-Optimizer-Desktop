@@ -58,8 +58,8 @@ function resolveFastbootPath(adbPath: string): string {
 
 function createWindow(): BrowserWindow {
   const window = new BrowserWindow({
-    width: 1180,
-    height: 760,
+    width: 1440,
+    height: 900,
     minWidth: 960,
     minHeight: 640,
     backgroundColor: '#e6ebed',

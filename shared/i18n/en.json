@@ -268,5 +268,13 @@
   "flash.flashing": "Flashing…",
   "flash.flashDone": "{partition} flashed. Magisk: {version}",
   "flash.rootOk": "Magisk active: {version}",
-  "flash.rootMissing": "Magisk did not answer as root. Open the app and finish setup."
+  "flash.rootMissing": "Magisk did not answer as root. Open the app and finish setup.",
+  "nav.profiles": "Profiles",
+  "nav.debloat": "Debloater",
+  "nav.files": "Files",
+  "nav.console": "Console",
+  "nav.logcat": "Logcat",
+  "nav.inspector": "Inspector",
+  "nav.settingsdb": "System settings",
+  "nav.power": "Doze & power"
 }

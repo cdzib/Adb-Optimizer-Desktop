@@ -1,0 +1,225 @@
+/* Dashboard "Estado": banner de salud, tabla Ahora y columna de acciones.
+   Solo tokens de styles.css; no introduce colores propios. */
+
+.dash-page {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.dash-health {
+  display: grid;
+  grid-template-columns: minmax(250px, 0.85fr) minmax(0, 1.6fr);
+  gap: 36px;
+  align-items: start;
+  padding: 12px 0 14px;
+  border-top: 2px solid var(--rule-strong);
+  border-bottom: 1px solid var(--rule);
+}
+
+.dash-health-main {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.dash-kicker {
+  font-size: var(--text-caption);
+  color: var(--muted);
+}
+
+.dash-score {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  font-family: var(--font-mono);
+  line-height: 1;
+}
+
+.dash-score strong {
+  font-size: 42px;
+  font-weight: 500;
+  letter-spacing: -0.05em;
+  color: var(--ink);
+}
+
+.dash-score span {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.dash-device {
+  margin: 0;
+  font-size: var(--text-meta);
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dash-health .health-meter {
+  min-width: 0;
+  margin-top: 8px;
+}
+
+.dash-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0;
+  min-width: 0;
+}
+
+.dash-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding: 0 22px;
+  border-left: 1px solid var(--rule-faint);
+}
+
+.dash-metric:first-child {
+  padding-left: 0;
+  border-left: 0;
+}
+
+.dash-metric-label {
+  font-size: var(--text-meta);
+  color: var(--muted);
+}
+
+.dash-metric-value {
+  font-family: var(--font-mono);
+  font-size: 20px;
+  font-weight: 500;
+  letter-spacing: -0.035em;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dash-metric-hint {
+  min-height: 14px;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dash-metric-bar {
+  height: 4px;
+  margin-top: 8px;
+  background: var(--track);
+  overflow: hidden;
+}
+
+.dash-metric-bar span {
+  display: block;
+  height: 100%;
+  background: var(--teal);
+  transition: width 400ms var(--ease);
+}
+
+.dash-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(300px, 1fr);
+  gap: 36px;
+  align-items: start;
+}
+
+.dash-grid .stack {
+  gap: 14px;
+}
+
+.dash-grid .spec-row {
+  padding: 6px 0;
+}
+
+.dash-grid .card {
+  padding-top: 18px;
+}
+
+.dash-action-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.dash-action-head h2 {
+  margin: 0;
+}
+
+.dash-action-head p.muted {
+  margin: 4px 0 0;
+}
+
+.dash-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.dash-actions button {
+  width: 100%;
+  justify-content: center;
+}
+
+.dash-add {
+  margin-top: 14px;
+}
+
+.dash-add button {
+  width: 100%;
+  justify-content: center;
+}
+
+.dash-grid .card h2 + .spec-table {
+  margin-top: 10px;
+}
+
+@media (max-width: 1180px) {
+  .dash-health {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 18px;
+  }
+
+  .dash-metrics {
+    max-width: 640px;
+  }
+}
+
+@media (max-width: 1020px) {
+  .dash-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .dash-health {
+    padding-top: 14px;
+  }
+}
+
+@media (max-width: 720px) {
+  .dash-metrics {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+
+  .dash-metric {
+    padding: 0;
+    border-left: 0;
+  }
+}
+
+/* El valor y su pista comparten línea para que cada fila mida ~34 px, como el mockup. */
+.dash-grid .spec-right {
+  flex-direction: row;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: 8px;
+}

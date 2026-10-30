@@ -15,7 +15,7 @@ Requisitos: Node >= 20 (CI usa 22), pnpm 11. `adb` en PATH o `ADB_PATH`.
 pnpm install
 pnpm dev            # Vite + Electron, compila main y elige puerto libre
 pnpm typecheck
-pnpm test           # mirror (5) + desktop (115), sin dispositivo
+pnpm test           # mirror (5) + desktop (293), sin dispositivo
 pnpm build          # dist/main + dist/renderer
 pnpm dist           # instalador electron-builder en desktop/release/
 ```

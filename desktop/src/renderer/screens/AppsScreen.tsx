@@ -5,6 +5,7 @@ import type {
   ApkExtractResult,
   AppList,
   DeviceInfo,
+  InstallOptions,
   InstalledApp,
 } from '../../shared/types'
 
@@ -13,11 +14,12 @@ type Filter = 'all' | 'system' | 'user' | 'hidden'
 interface Props {
   t: (key: string) => string
   device: DeviceInfo | null
+  onInspect?: (packageName: string) => void
 }
 
 const RISK_ORDER: Record<string, number> = { safe: 0, moderate: 1, advanced: 2 }
 
-export function AppsScreen({ t, device }: Props): JSX.Element {
+export function AppsScreen({ t, device, onInspect }: Props): JSX.Element {
   const [list, setList] = useState<AppList | null>(null)
   const [actions, setActions] = useState<ActionSpec[]>([])
   const [loading, setLoading] = useState(false)
@@ -30,6 +32,11 @@ export function AppsScreen({ t, device }: Props): JSX.Element {
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
   const [extracted, setExtracted] = useState<ApkExtractResult | null>(null)
+  const [installOptions, setInstallOptions] = useState<InstallOptions>({
+    grantPermissions: false,
+    allowDowngrade: false,
+    allowTest: false,
+  })
 
   const load = useCallback(async () => {
     if (!device) return
@@ -151,7 +158,7 @@ export function AppsScreen({ t, device }: Props): JSX.Element {
     try {
       const paths = await window.api.pickApks()
       if (paths.length === 0) return
-      const result = await window.api.installApks(paths)
+      const result = await window.api.installApks(paths, installOptions)
       if (result.ok) {
         setNotice(
           paths.length > 1
@@ -290,6 +297,55 @@ export function AppsScreen({ t, device }: Props): JSX.Element {
           />
         </div>
 
+        <details className="disclose" style={{ marginTop: '12px' }}>
+          <summary>Opciones de instalación</summary>
+          <div className="field-row" style={{ marginTop: '8px' }}>
+            <label className="checkbox">
+              <input
+                type="checkbox"
+                checked={installOptions.grantPermissions}
+                onChange={(event) =>
+                  setInstallOptions((current) => ({
+                    ...current,
+                    grantPermissions: event.target.checked,
+                  }))
+                }
+              />
+              Conceder permisos (<span className="mono">-g</span>)
+            </label>
+            <label className="checkbox">
+              <input
+                type="checkbox"
+                checked={installOptions.allowDowngrade}
+                onChange={(event) =>
+                  setInstallOptions((current) => ({
+                    ...current,
+                    allowDowngrade: event.target.checked,
+                  }))
+                }
+              />
+              Permitir downgrade (<span className="mono">-d</span>)
+            </label>
+            <label className="checkbox">
+              <input
+                type="checkbox"
+                checked={installOptions.allowTest}
+                onChange={(event) =>
+                  setInstallOptions((current) => ({
+                    ...current,
+                    allowTest: event.target.checked,
+                  }))
+                }
+              />
+              Aceptar APK de test (<span className="mono">-t</span>)
+            </label>
+          </div>
+          <p className="muted" style={{ margin: '6px 0 0' }}>
+            Siempre se reemplaza la app existente (<span className="mono">-r</span>). Las demás
+            opciones cambian el resultado y son opt-in.
+          </p>
+        </details>
+
         {error && <div className="alert error">{error}</div>}
         {notice && (
           <div className="alert ok with-action">
@@ -405,6 +461,21 @@ export function AppsScreen({ t, device }: Props): JSX.Element {
               <span>Extraer APK</span>
               <span className="badge plain">base + splits</span>
             </button>
+
+            {onInspect && (
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  const packageName = menu.app.packageName
+                  setMenu(null)
+                  onInspect(packageName)
+                }}
+              >
+                <span>Inspeccionar app</span>
+                <span className="badge plain">permisos · firma</span>
+              </button>
+            )}
 
             <div className="menu-sep" />
 

@@ -28,6 +28,34 @@ import type {
   FlashDiagnostics,
   FlashImage,
   FlashResult,
+  AppInspection,
+  ConsoleResult,
+  DebloatAction,
+  DebloatCatalogState,
+  DebloatRestoreItem,
+  DebloatRun,
+  DebloatSuggestion,
+  DeviceDiagnostics,
+  DevicePowerAction,
+  DozeAction,
+  DozeStatus,
+  InstallOptions,
+  LogcatEntry,
+  PowerResult,
+  ProfileApp,
+  ProfileAppState,
+  ProfileChange,
+  ProfilePlan,
+  ProfileProgress,
+  ProfileRun,
+  ProfilesDocument,
+  QuickSettings,
+  RemoteFileEntry,
+  SettingEntry,
+  SettingsChange,
+  SettingsNamespace,
+  SettingsWriteResult,
+  AppProfile,
 } from '../shared/types'
 
 export interface DesktopApi {
@@ -51,6 +79,9 @@ export interface DesktopApi {
   cancelQr(): Promise<void>
   onQrStatus(listener: (status: QrStatus) => void): () => void
   disconnect(): Promise<void>
+  sessionDevices(): Promise<DeviceInfo[]>
+  switchDevice(id: string): Promise<DeviceInfo>
+  disconnectDevice(id?: string): Promise<void>
   deviceInfo(): Promise<DeviceInfo | null>
   metrics(): Promise<DeviceMetrics | null>
   recipes(): Promise<Recipe[]>
@@ -58,7 +89,7 @@ export interface DesktopApi {
   plan(profile: Profile): Promise<PlanItem[]>
   run(recipeIds: string[], dryRun: boolean): Promise<RunResult[]>
   pickApks(): Promise<string[]>
-  installApks(apkPaths: string[]): Promise<ApkInstallResult>
+  installApks(apkPaths: string[], options?: InstallOptions): Promise<ApkInstallResult>
   extractApk(packageName: string): Promise<ApkExtractResult | null>
   openFolder(path: string): Promise<void>
   launchers(): Promise<RemoteLauncher[]>
@@ -112,6 +143,58 @@ export interface DesktopApi {
   scrcpyStart(): Promise<ScrcpyStatus>
   scrcpyStop(): Promise<ScrcpyStatus>
   onScrcpyStatus(listener: (status: ScrcpyStatus) => void): () => void
+
+  /* ---------------------------- paridad con Android */
+  consoleHistory(): Promise<string[]>
+  consoleRun(command: string): Promise<ConsoleResult>
+  consoleClearHistory(): Promise<void>
+
+  logcatRead(limit: number, since?: string): Promise<LogcatEntry[]>
+  logcatClear(): Promise<void>
+  logcatExport(entries: LogcatEntry[]): Promise<string | null>
+
+  inspectApp(packageName: string): Promise<AppInspection>
+
+  settingsList(namespace: SettingsNamespace): Promise<SettingEntry[]>
+  settingsSave(namespace: SettingsNamespace, key: string, value: string): Promise<SettingsWriteResult>
+  settingsHistory(): Promise<SettingsChange[]>
+  settingsUndo(id: string): Promise<SettingsWriteResult>
+  settingsQuick(): Promise<QuickSettings>
+  settingsSetNightMode(mode: 'yes' | 'no' | 'auto'): Promise<SettingsWriteResult>
+
+  dozeStatus(): Promise<DozeStatus>
+  dozeRun(action: DozeAction): Promise<DozeStatus>
+  devicePower(action: DevicePowerAction): Promise<PowerResult>
+
+  filesList(path: string): Promise<RemoteFileEntry[]>
+  filesReadText(path: string): Promise<string>
+  filesMkdir(parent: string, name: string): Promise<void>
+  filesRename(path: string, newName: string): Promise<void>
+  filesDelete(path: string): Promise<void>
+  filesInstallApk(path: string, options?: InstallOptions): Promise<{ ok: boolean; message: string }>
+  filesPull(path: string): Promise<{ directory: string; files: string[] } | null>
+  filesPush(targetDir: string): Promise<{ files: string[] } | null>
+
+  profilesDocument(): Promise<ProfilesDocument>
+  profilesSave(profile: AppProfile): Promise<AppProfile>
+  profilesDelete(id: string): Promise<boolean>
+  profilesSetWatched(id: string, watched: boolean): Promise<boolean>
+  profilesStates(): Promise<Record<string, ProfileAppState>>
+  profilesSnapshot(): Promise<ProfileApp[]>
+  profilesPlan(profile: AppProfile): Promise<ProfilePlan>
+  profilesApply(profile: AppProfile): Promise<ProfileRun>
+  profilesUndo(changes: ProfileChange[]): Promise<number>
+  onProfileProgress(listener: (progress: ProfileProgress) => void): () => void
+
+  debloatCatalog(): Promise<DebloatCatalogState>
+  debloatDownload(): Promise<DebloatCatalogState>
+  debloatSuggestions(): Promise<DebloatSuggestion[]>
+  debloatRestorable(): Promise<DebloatRestoreItem[]>
+  debloatApply(action: DebloatAction, targets: string[]): Promise<DebloatRun>
+  debloatUndo(run: DebloatRun): Promise<number>
+  debloatRestore(targets: string[]): Promise<DebloatRun>
+
+  deviceDiagnostics(): Promise<DeviceDiagnostics>
 }
 
 declare global {

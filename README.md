@@ -19,6 +19,8 @@ Celular / Escritorio  ──ADB sobre TCP──▶  TV, TV Box u otro Android
 | Launcher de sistema y apps a `/system` (escritorio) | ✅ Con `adb root` o `su` (Magisk/KernelSU); diagnóstico en la pestaña **Root y sistema** |
 | Flasheo / Magisk (escritorio) | ✅ Respaldo de `boot`/`init_boot`, parcheo guiado con la app de Magisk y flasheo por `fastboot` |
 | App Android (Kotlin + Compose) | ✅ Misma lógica; `assembleDebug` y tests en verde |
+| Paridad con la app Android (escritorio) | ✅ Consola, logcat, inspector, ajustes global/secure/system, Doze y energía, archivos, perfiles, debloater y diagnóstico ampliado |
+| Temas de interfaz | ✅ Claro, oscuro y del sistema, con preferencia local y seguimiento de `prefers-color-scheme` |
 | Depuración inalámbrica real (TLS + pairing) | ✅ mDNS + código de 6 dígitos + QR vía libadb |
 | Firma / publicación | ⏳ Fase 4 |
 
@@ -150,6 +152,26 @@ adb pull /data/app/.../split_config.arm64_v8a.apk ./com.example.app/
 
 Detalle en `docs/adr/ADR-011-gestion-apps.md`.
 
+## Paridad con la app Android (escritorio)
+
+Las pantallas nuevas reutilizan la misma sesión ADB y las reglas de la app Android:
+
+- **Consola** — comandos con tope de 60 s, salida/código/duración e historial local.
+- **Registro** — logcat en vivo con filtros por nivel/texto y exportación.
+- **Inspector** — permisos, AppOps, componentes, firma y SHA-256 por app.
+- **Ajustes del sistema** — tablas `global`/`secure`/`system` con read-back e historial para deshacer.
+- **Doze y energía** — estado de Doze, forzar/step/unforce/motion y reinicio, apagado, recovery,
+  bootloader o reinicio de SystemUI.
+- **Archivos** — navegar, ver texto, crear, renombrar, borrar, instalar un APK del dispositivo y
+  descargar/subir archivos.
+- **Perfiles** — snapshot del estado de las apps, aviso de drift, aplicación confirmada y undo.
+- **Debloater** — catálogo UAD‑NG descargado en runtime; nunca ofrece entradas `Unsafe`.
+
+Toda escritura se confirma leyendo el dispositivo de vuelta (`pm`, `settings`, Doze). En modo
+laboratorio (`ADB_OPTIMIZER_LAB=1`) las operaciones de escritura siguen pasando por
+`assertLabAllowed`. Los perfiles, el historial de consola y el catálogo del debloater viven en
+`app.getPath('userData')`, no en el repositorio.
+
 ## DPC (Device Owner)
 
 Pestaña **DPC** en el escritorio:
@@ -182,7 +204,7 @@ preflight lo verifica y bloquea el intento si no se cumple. Detalle en
 ```bash
 pnpm install
 pnpm dev          # Vite + Electron con hot reload (elige puerto libre si 5173 esta ocupado)
-pnpm test         # 115 tests
+pnpm test         # 298 tests (5 mirror + 293 desktop)
 pnpm build        # dist/main + dist/renderer
 pnpm dist         # instalador (electron-builder)
 ```

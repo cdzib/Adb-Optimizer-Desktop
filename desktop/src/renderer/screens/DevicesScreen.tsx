@@ -20,7 +20,7 @@ interface Props {
   onConnected: (device: DeviceInfo) => void
 }
 
-type Mode = 'usb' | 'wifi'
+type Mode = 'usb' | 'wifi' | 'qr'
 
 export function DevicesScreen({ t, onConnected }: Props): JSX.Element {
   const [mode, setMode] = useState<Mode>('usb')
@@ -249,13 +249,14 @@ export function DevicesScreen({ t, onConnected }: Props): JSX.Element {
   }
 
   const usbCandidate = usbDevices.find((device) => device.state === 'device')
-  const found = mode === 'usb' ? usbDevices : wifiDevices
+  const found = mode === 'wifi' ? wifiDevices : mode === 'usb' ? usbDevices : []
   const qrRemainingMs = qr ? Math.max(0, qr.expiresInMs - (tick - qrStartedAt)) : 0
   const qrExpired = Boolean(qr) && (qrRemainingMs <= 0 || qrStatus?.state === 'timeout')
 
   return (
-    <div className="stack">
-      <div className="device-mode">
+    <div className="connection-board">
+      <div className="connection-board-head">
+        <h2>Conexión</h2>
         <div className="segmented mode-switch">
           <button
             type="button"
@@ -263,7 +264,7 @@ export function DevicesScreen({ t, onConnected }: Props): JSX.Element {
             aria-pressed={mode === 'usb'}
             onClick={() => setMode('usb')}
           >
-            Cable USB{usbDevices.length > 0 ? ` · ${usbDevices.length}` : ''}
+            USB{usbDevices.length > 0 ? ` · ${usbDevices.length}` : ''}
           </button>
           <button
             type="button"
@@ -273,173 +274,46 @@ export function DevicesScreen({ t, onConnected }: Props): JSX.Element {
           >
             Wi‑Fi{wifiDevices.length > 0 ? ` · ${wifiDevices.length}` : ''}
           </button>
+          <button
+            type="button"
+            className={mode === 'qr' ? 'active' : ''}
+            aria-pressed={mode === 'qr'}
+            onClick={() => setMode('qr')}
+          >
+            QR
+          </button>
         </div>
-        <span className="muted">
-          {mode === 'usb'
-            ? 'Conexión directa por cable. La más estable y sin red.'
-            : 'Misma red Wi‑Fi. Descubre por mDNS o usa la IP del equipo.'}
-        </span>
+      </div>
+
+      <div className="connection-board-sub">
+        <div className="connection-board-title">
+          <strong>{mode === 'qr' ? 'Vincular con QR' : 'Equipos detectados'}</strong>
+          <span className="scan-meta">
+            {mode === 'qr'
+              ? 'Escanéalo desde Depuración inalámbrica'
+              : scanning
+                ? 'Buscando…'
+                : lastScanAt
+                  ? `Última búsqueda ${formatTime(lastScanAt)} · ${found.length} ${
+                      found.length === 1 ? 'equipo' : 'equipos'
+                    }`
+                  : 'Sin búsquedas todavía'}
+          </span>
+        </div>
+        {mode !== 'qr' && (
+          <button type="button" className="ghost small" onClick={() => void scan()} disabled={scanning}>
+            {scanning ? 'Buscando…' : 'Actualizar'}
+          </button>
+        )}
       </div>
 
       {error && <div className="alert error">{error}</div>}
 
-      <div className="devices-grid">
-        <section className="board">
-          <div className="card-head">
-            <div className="board-title">
-              <h2>{mode === 'usb' ? 'Dispositivos por USB' : 'Dispositivos en la red'}</h2>
-              <span className="scan-meta">
-                {scanning
-                  ? 'Buscando…'
-                  : lastScanAt
-                    ? `Última búsqueda ${formatTime(lastScanAt)} · ${found.length} ${
-                        found.length === 1 ? 'equipo' : 'equipos'
-                      }`
-                    : 'Sin búsquedas todavía'}
-              </span>
-            </div>
-            <button type="button" className="ghost small" onClick={() => void scan()} disabled={scanning}>
-              {scanning ? 'Buscando…' : 'Buscar'}
-            </button>
-          </div>
-
-          <ScanStrip active={scanning} />
-
-          {found.length === 0 && !scanning ? (
-            <div className="board-empty">
-              <p>
-                {mode === 'usb'
-                  ? 'Ningún dispositivo conectado por cable.'
-                  : 'No se encontraron equipos en la red.'}
-              </p>
-              <ul className="empty-hints">
-                {mode === 'usb' ? (
-                  <>
-                    <li>Prueba otro cable y otro puerto USB directo (sin hub).</li>
-                    <li>Acepta el diálogo “¿Permitir depuración USB?” en la pantalla del equipo.</li>
-                    <li>Windows: instala el driver OEM del fabricante si no aparece.</li>
-                    <li>Si el estado es “sin autorizar”, revisa la pantalla del dispositivo.</li>
-                  </>
-                ) : (
-                  <>
-                    <li>Ambos equipos en la misma red Wi‑Fi y depuración inalámbrica activa.</li>
-                    <li>Si el router aísla clientes, usa la conexión manual por IP.</li>
-                    <li>El QR exige abrir “Vincular con QR” en el teléfono antes de escanear.</li>
-                    <li>Un TV sin cámara necesita código de 6 dígitos o cable USB.</li>
-                  </>
-                )}
-              </ul>
-              <button type="button" className="ghost small" onClick={() => void scan()}>
-                Reintentar
-              </button>
-            </div>
-          ) : (
-            <ul className="list">
-              {found.map((device) => (
-                <li key={device.id} className="device-row">
-                  <div className="device-identity">
-                    <div className="device-line">
-                      <strong>{displayModel(device)}</strong>
-                      <span className="badge plain">{transportLabel(device.transport)}</span>
-                    </div>
-                    <span className="device-serial">{device.address || device.id}</span>
-                  </div>
-                  <StateBadge state={device.state} />
-                  <div className="row-actions">
-                    <button
-                      type="button"
-                      className="ghost small"
-                      onClick={() => void copyAddress(device.address)}
-                      aria-label={`Copiar la dirección de ${displayModel(device)}`}
-                    >
-                      {copied === device.address ? 'Copiada' : 'Copiar IP'}
-                    </button>
-                    <button
-                      type="button"
-                      className="primary small"
-                      disabled={device.state !== 'device' || busy === device.id}
-                      onClick={() => void connectTo(device.id)}
-                    >
-                      {busy === device.id ? 'Conectando…' : 'Conectar'}
-                    </button>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-
-          <RecentDevices
-            recent={recent.filter(
-              (item) => !found.some((device) => hostOf(device.address) === hostOf(item.address)),
-            )}
-            busy={busy}
-            onConnect={(address) => void connectTo(address)}
-            onForget={forget}
-          />
-
-          {found.some((device) => device.state === 'unauthorized') && (
-            <div className="alert warn">
-              Hay un dispositivo sin autorizar: desbloquéalo y acepta el diálogo
-              “¿Permitir depuración USB?” en su pantalla.
-            </div>
-          )}
-
-          {mode === 'wifi' && (
-            <>
-              <h3 className="section-title">Conexión manual</h3>
-              <div className="manual-inline">
-                <label className="field grow">
-                  <span>Dirección IP</span>
-                  <input
-                    value={address}
-                    placeholder="192.168.1.40"
-                    inputMode="decimal"
-                    onChange={(event) => setAddress(event.target.value)}
-                  />
-                </label>
-                <label className="field port">
-                  <span>Puerto (opcional)</span>
-                  <input
-                    value={port}
-                    inputMode="numeric"
-                    onChange={(event) => setPort(event.target.value)}
-                  />
-                </label>
-                <div className="field field-action">
-                  <span>&nbsp;</span>
-                  <button
-                    type="button"
-                    className="primary"
-                    onClick={connectManual}
-                    disabled={busy !== null}
-                  >
-                    {busy !== null && busy === manualTarget ? 'Conectando…' : 'Conectar'}
-                  </button>
-                </div>
-              </div>
-              <p className="muted" style={{ marginTop: '8px' }}>
-                El puerto <span className="mono">5555</span> corresponde a ADB clásico (
-                <span className="mono">adb tcpip</span>). La depuración inalámbrica moderna muestra
-                su propio puerto TLS en el dispositivo.
-              </p>
-            </>
-          )}
-
-          {mode === 'usb' && (
-            <div className="board-foot">
-              <span className="muted">¿Quieres usarlo sin cable?</span>
-              <button type="button" className="ghost small" onClick={() => setMode('wifi')}>
-                Ir a Wi‑Fi
-              </button>
-            </div>
-          )}
-        </section>
-
-        <aside className="stack devices-aside">
-          {mode === 'wifi' && (
+      {mode === 'qr' ? (
+        <div className="connection-qr">
             <section className={`card qr-card${qr ? ' qr-live' : ''}`}>
               <div className="card-head">
-                <h2>Vincular con QR</h2>
+                <h2>Estado de la vinculación</h2>
                 {qr && !qrExpired && <span className="badge warn">activo</span>}
               </div>
 
@@ -568,30 +442,118 @@ export function DevicesScreen({ t, onConnected }: Props): JSX.Element {
                 </details>
               </div>
             </section>
+        </div>
+      ) : (
+        <>
+          <ScanStrip active={scanning} />
+
+          <div className="device-table-head" aria-hidden>
+            <span>Equipo</span>
+            <span>Vía</span>
+            <span>Estado</span>
+            <span />
+          </div>
+
+          {found.length === 0 && !scanning ? (
+            <div className="board-empty">
+              <p>
+                {mode === 'usb'
+                  ? 'Ningún dispositivo conectado por cable.'
+                  : 'No se encontraron equipos en la red.'}
+              </p>
+              <p className="muted">
+                {mode === 'usb'
+                  ? 'Conecta el cable y acepta la huella RSA en el equipo.'
+                  : 'Ambos equipos en la misma red y con depuración inalámbrica activa.'}
+              </p>
+              <button type="button" className="ghost small" onClick={() => void scan()}>
+                Reintentar
+              </button>
+            </div>
+          ) : (
+            <ul className="list device-table">
+              {found.map((device) => (
+                <li key={device.id} className="device-row">
+                  <div className="device-identity">
+                    <div className="device-line">
+                      <strong>{displayModel(device)}</strong>
+                    </div>
+                    <span className="device-serial">{device.address || device.id}</span>
+                  </div>
+                  <span className="device-transport">{transportLabel(device.transport)}</span>
+                  <div className="device-state">
+                    <StateBadge state={device.state} />
+                  </div>
+                  <div className="row-actions">
+                    <button
+                      type="button"
+                      className="ghost small"
+                      onClick={() => void copyAddress(device.address)}
+                      aria-label={`Copiar la dirección de ${displayModel(device)}`}
+                    >
+                      {copied === device.address ? 'Copiada' : 'Copiar IP'}
+                    </button>
+                    <button
+                      type="button"
+                      className="primary small"
+                      disabled={device.state !== 'device' || busy === device.id}
+                      onClick={() => void connectTo(device.id)}
+                    >
+                      {busy === device.id ? 'Conectando…' : 'Conectar'}
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
           )}
 
-          <section className="card">
-            <h2>{mode === 'usb' ? 'Requisitos en el dispositivo' : 'Cómo activar la depuración'}</h2>
-            <ol className="steps">
-              {mode === 'usb' ? (
-                <>
-                  <li>Ajustes → Sistema → Información → tocar “Compilación” 7 veces</li>
-                  <li>Opciones de desarrollador → Depuración USB</li>
-                  <li>Conectar el cable y aceptar la huella RSA</li>
-                  <li>Windows: instala el driver OEM si no aparece</li>
-                </>
-              ) : (
-                <>
-                  <li>Ajustes → Sistema → Información → tocar “Compilación” 7 veces</li>
-                  <li>Depuración inalámbrica o depuración por red</li>
-                  <li>Anota la IP y el puerto que muestra la pantalla</li>
-                  <li>Misma red Wi‑Fi, sin aislamiento de clientes</li>
-                </>
-              )}
-            </ol>
-          </section>
+          {found.some((device) => device.state === 'unauthorized') && (
+            <div className="alert warn">
+              Hay un dispositivo sin autorizar: desbloquéalo y acepta el diálogo
+              “¿Permitir depuración USB?” en su pantalla.
+            </div>
+          )}
 
-          {mode === 'wifi' && (
+          <div className="manual-block">
+            <h3 className="section-title">Dirección manual</h3>
+            <div className="manual-inline">
+              <label className="field grow">
+                <span>Dirección IP</span>
+                <input
+                  value={address}
+                  placeholder="192.168.1.40"
+                  inputMode="decimal"
+                  onChange={(event) => setAddress(event.target.value)}
+                />
+              </label>
+              <label className="field port">
+                <span>Puerto</span>
+                <input
+                  value={port}
+                  inputMode="numeric"
+                  onChange={(event) => setPort(event.target.value)}
+                />
+              </label>
+              <div className="field field-action">
+                <span>&nbsp;</span>
+                <button
+                  type="button"
+                  className="primary"
+                  onClick={connectManual}
+                  disabled={busy !== null}
+                >
+                  {busy !== null && busy === manualTarget ? 'Conectando…' : 'Conectar'}
+                </button>
+              </div>
+            </div>
+            <p className="muted connection-hint">
+              El puerto <span className="mono">5555</span> corresponde a ADB clásico (
+              <span className="mono">adb tcpip</span>). La depuración inalámbrica moderna muestra
+              su propio puerto TLS en el dispositivo.
+            </p>
+          </div>
+
+          <div className="connection-disclosures">
           <details className="disclose">
             <summary>Vincular con código</summary>
             <p className="muted">
@@ -626,9 +588,6 @@ export function DevicesScreen({ t, onConnected }: Props): JSX.Element {
               Vincular con código
             </button>
           </details>
-          )}
-
-          {mode === 'wifi' && (
           <details className="disclose">
             <summary>Activar Wi‑Fi desde USB</summary>
             <p className="muted">
@@ -671,9 +630,38 @@ export function DevicesScreen({ t, onConnected }: Props): JSX.Element {
               </div>
             )}
           </details>
-          )}
-        </aside>
-      </div>
+            <details className="disclose">
+              <summary>Requisitos del dispositivo</summary>
+              <ol className="steps">
+                {mode === 'usb' ? (
+                  <>
+                    <li>Ajustes → Sistema → Información → tocar “Compilación” 7 veces</li>
+                    <li>Opciones de desarrollador → Depuración USB</li>
+                    <li>Conectar el cable y aceptar la huella RSA</li>
+                    <li>Windows: instala el driver OEM si no aparece</li>
+                  </>
+                ) : (
+                  <>
+                    <li>Ajustes → Sistema → Información → tocar “Compilación” 7 veces</li>
+                    <li>Depuración inalámbrica o depuración por red</li>
+                    <li>Anota la IP y el puerto que muestra la pantalla</li>
+                    <li>Misma red Wi‑Fi, sin aislamiento de clientes</li>
+                  </>
+                )}
+              </ol>
+            </details>
+          </div>
+
+          <RecentDevices
+            recent={recent.filter(
+              (item) => !found.some((device) => hostOf(device.address) === hostOf(item.address)),
+            )}
+            busy={busy}
+            onConnect={(value) => void connectTo(value)}
+            onForget={forget}
+          />
+        </>
+      )}
     </div>
   )
 }

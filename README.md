@@ -76,7 +76,7 @@ Magisk no tiene parcheador headless para PC: el parcheo se hace en su app
 ## Estructura
 
 ```
-shared/                      # Única fuente de verdad (sin copias en cada cliente)
+shared/                      # Submódulo → adb-optimizer-contract (fuente única, sin copias)
 ├─ recipes/recipes.json      # recetas estáticas: run + verify + undo
 ├─ recipes/actions.json      # acciones parametrizadas por paquete
 ├─ recipes/schema.json       # JSON Schema, validado en TS y en Kotlin
@@ -89,7 +89,7 @@ desktop/                     # Electron (main/preload/renderer)
 ├─ src/renderer/            # React: dispositivos, estado, optimizar, historial
 └─ tests/                    # parsers + conformidad + motor (vitest)
 
-android/  (hermano)           # Gradle multi-módulo — ../AdbOptimizer-Android
+../Adb-Optimizer-Android/    # repo aparte (no vive aquí) — Gradle multi-módulo
 ├─ core/model                # contrato serializable (mismo schema)
 ├─ core/adb                  # AdbShell + dadb + parsers
 ├─ core/optimization         # motor de recetas + bitácora
@@ -97,7 +97,7 @@ android/  (hermano)           # Gradle multi-módulo — ../AdbOptimizer-Android
 ```
 
 La estructura interna de la app y las reglas para agregar features están en
-[`AdbOptimizer-Android/docs/arquitectura-android.md`](../AdbOptimizer-Android/docs/arquitectura-android.md).
+[`Adb-Optimizer-Android/docs/arquitectura-android.md`](../Adb-Optimizer-Android/docs/arquitectura-android.md).
 
 ## Conexión (app Android)
 
@@ -119,7 +119,7 @@ Además:
   las recetas sean fiables.
 
 Implementación: `libadb-android` (SPAKE2 + TLS), `NsdManager` para mDNS, `zxing` para QR.
-Detalle en `../AdbOptimizer-Android/docs/adr/ADR-004-transporte-adb.md`.
+Detalle en `../Adb-Optimizer-Android/docs/adr/ADR-004-transporte-adb.md`.
 
 ## Gestor de aplicaciones (escritorio)
 
@@ -201,6 +201,10 @@ preflight lo verifica y bloquea el intento si no se cumple. Detalle en
 
 ### Escritorio
 
+El catálogo llega por el submódulo `shared/` (repo `adb-optimizer-contract`). Clona con
+`git clone --recurse-submodules` o, si ya tenías el repo, corre `git submodule update --init`
+antes de instalar.
+
 ```bash
 pnpm install
 pnpm dev          # Vite + Electron con hot reload (elige puerto libre si 5173 esta ocupado)
@@ -215,10 +219,10 @@ El instalador no incluye `platform-tools`: usa las rutas configuradas o ten
 
 ### Android
 
-Proyecto Android en la carpeta hermana `../AdbOptimizer-Android`:
+Proyecto Android en la carpeta hermana `../Adb-Optimizer-Android`:
 
 ```bash
-cd ../AdbOptimizer-Android
+cd ../Adb-Optimizer-Android
 ./gradlew assembleDebug
 ./gradlew testDebugUnitTest
 # APK: app/build/outputs/apk/debug/app-debug.apk
@@ -261,5 +265,5 @@ Detalle y orden recomendado en `docs/testing.md`.
 ## Próximo paso
 
 Fase 0 (spike): validar emparejamiento TLS en Android 11+ y el parque real de TVs.
-Ver `../AdbOptimizer-Android/docs/fase-0-spike.md`, `../AdbOptimizer-Android/docs/adr/` y
+Ver `../Adb-Optimizer-Android/docs/fase-0-spike.md`, `../Adb-Optimizer-Android/docs/adr/` y
 `docs/adr/` (decisiones de escritorio y catálogo compartido).

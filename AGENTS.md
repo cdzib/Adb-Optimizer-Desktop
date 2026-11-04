@@ -4,7 +4,8 @@
 
 Host de escritorio (Electron + React + TypeScript) que diagnostica, optimiza, respalda y
 flashea dispositivos Android vía ADB/fastboot. El catálogo de recetas es la fuente de
-verdad compartida y la app Android vive en el repo hermano `../AdbOptimizer-Android`.
+verdad compartida (submódulo `shared/` → repo `adb-optimizer-contract`) y la app Android
+vive en el repo hermano `../Adb-Optimizer-Android`.
 Sin backend, cuentas ni telemetría.
 
 ## Comandos
@@ -44,13 +45,15 @@ Si ejecutas `vitest` directo sin compilarlo, desktop falla al resolver el paquet
 - `packages/mirror/` — plugin independiente de scrcpy, CommonJS con declaraciones, sin
   dependencias de runtime. `desktop/src/main/adb/scrcpy-session.ts` es solo una fachada
   que lo reexporta. Cámbialo en el paquete, no en desktop.
-- `shared/` — datos de runtime (recetas, acciones, schema, i18n, blocklist), no tipos TS.
+- `shared/` — submódulo del repo `adb-optimizer-contract`: datos de runtime (recetas,
+  acciones, schema, i18n, blocklist), no tipos TS. Inicialízalo con
+  `git submodule update --init`; no edites archivos ahí desde este repo.
   `desktop/src/shared/types.ts` es el contrato TypeScript y no debe confundirse con él.
 - `scripts/` — laboratorio de emulador y scripts de aprovisionamiento DPC.
 - `docs/adr/` — decisiones de arquitectura y transporte del escritorio y del catálogo
   compartido; `docs/testing.md` — niveles de prueba; `docs/plans/` — flujos de launcher y
   Magisk. La arquitectura y los ADR de la app Android viven en
-  `../AdbOptimizer-Android/docs/` (ADR-001, 004, 008, 014 y 016).
+  `../Adb-Optimizer-Android/docs/` (ADR-001, 004, 008, 014 y 016).
 
 Al agregar una operación IPC hay que tocar tres sitios: handler en
 `desktop/src/main/ipc.ts`, método/API en `desktop/src/preload/index.ts` y el tipo de
@@ -58,8 +61,9 @@ Al agregar una operación IPC hay que tocar tres sitios: handler en
 
 ## Catálogo compartido
 
-`shared/` es la única fuente de verdad y **también la consume la app Android hermana**
-(`app/build.gradle.kts` la monta como assets vía `../shared`). No copies el catálogo
+`shared/` es un submódulo del repo `adb-optimizer-contract` y la única fuente de verdad:
+**también la consume la app Android hermana**, que lo monta como assets desde su propio
+`shared/`. Los cambios se hacen en el repo del contrato, no aquí. No copies el catálogo
 dentro de un cliente ni cambies el schema solo para desktop.
 
 Al añadir o modificar una receta/acción:
@@ -86,9 +90,9 @@ afecta contratos, avisa/verifica también el repo Android.
   físico con `ADB_OPTIMIZER_LAB_SERIALS`. Cualquier IPC nuevo que escriba, reinicie o
   flashee debe llamar `assertLabAllowed` (`desktop/src/main/lab.ts`).
 - Rutas configurables: `ADB_PATH`, `FASTBOOT_PATH`, `SCRCPY_PATH` y
-  `ADB_OPTIMIZER_SHARED`. En desarrollo `shared/` se resuelve junto al repo; el paquete
-  lo incluye vía `extraResources` en `desktop/electron-builder.yml`. Ese config **no**
-  incluye `platform-tools`, así que el instalador depende de adb/fastboot del sistema o
-  de rutas configuradas.
+  `ADB_OPTIMIZER_SHARED`. En desarrollo `shared/` es el submódulo junto al repo; el
+  paquete lo incluye vía `extraResources` en `desktop/electron-builder.yml`. Ese config
+  **no** incluye `platform-tools`, así que el instalador depende de adb/fastboot del
+  sistema o de rutas configuradas.
 - `shared/apps/protected-packages.json` bloquea paquetes críticos; no lo debilites para
   hacer pasar una prueba o una acción.
